@@ -148,7 +148,7 @@ function sectionHtml(s, width) {
   const body = justify(s.items, width, ROW_HEIGHT[state.zoom]).map((row) =>
     `<div class="row" style="height:${row.h.toFixed(2)}px">${row.items.map(({ item, ratio }) => tileHtml(item, ratio, row)).join("")}</div>`).join("");
   if (!s.title) return `<section class="group">${body}</section>`;
-  const text = `<b>${esc(s.title)}</b><small>${state.selected ? "Select all" : photos(s.items.length)}</small>`;
+  const text = `<b>${esc(s.title)}</b>${state.selected ? "<small>Select all</small>" : ""}`;
   const label = state.selected ? `<button data-act="select-all" data-id="${esc(s.id)}">${text}</button>` : `<span>${text}</span>`;
   return `<section class="group"><div class="label">${label}</div>${body}</section>`;
 }
@@ -234,7 +234,7 @@ function setZoom(z, anchorId) {
   ls.set("zoom", z);
   renderNow();
   const after = top(anchorId);
-  if (before !== undefined && after !== undefined) window.scrollBy(0, after - before); // keep the pinched photo under your fingers
+  if (before !== undefined && after !== undefined) $("#main").scrollBy(0, after - before); // keep the pinched photo under your fingers
 }
 
 function setupZoom() {
@@ -454,7 +454,8 @@ function setupPhotoGestures(strip) {
       moved = true;
     } else if (e.touches.length === 1) {
       moved = false;
-      g = pz.s > 1 ? { kind: "pan", x0: e.touches[0].clientX - pz.x, y0: e.touches[0].clientY - pz.y } : { kind: "tap", x: e.touches[0].clientX, y: e.touches[0].clientY };
+      const t = e.touches[0];
+      g = { kind: pz.s > 1 ? "pan" : "tap", x: t.clientX, y: t.clientY, x0: t.clientX - pz.x, y0: t.clientY - pz.y };
     }
   }, { passive: true });
 
@@ -470,7 +471,7 @@ function setupPhotoGestures(strip) {
       applyZoom();
     } else if (g.kind === "pan" && e.touches.length === 1) {
       e.preventDefault();
-      moved = true;
+      if (Math.hypot(e.touches[0].clientX - g.x, e.touches[0].clientY - g.y) > 10) moved = true; // a wobbly tap still counts as a tap
       pz.x = e.touches[0].clientX - g.x0;
       pz.y = e.touches[0].clientY - g.y0;
       clampPan();
@@ -635,7 +636,7 @@ async function saveLink(page, existing, urls, room) {
   const had = new Set(state.items.filter((i) => i.source_id === source.id).map((i) => i.origin_url));
   state.busy.add(source.id);
   render();
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  $("#main").scrollTo({ top: 0, behavior: "smooth" });
   await importImages(urls.filter((u) => !had.has(u)), source.id, () => room);
   state.busy.delete(source.id);
   render();
@@ -762,7 +763,7 @@ async function onAct(act, el) {
   if (act === "view") {
     state.view = el.dataset.val;
     ls.set("view", state.view);
-    window.scrollTo(0, 0);
+    $("#main").scrollTo(0, 0);
     renderNow();
   }
   if (act === "cancel") setSelecting(false);

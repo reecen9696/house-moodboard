@@ -1,6 +1,6 @@
 // Minimal service worker: makes the app installable and keeps the shell available offline.
 // Network first, so a new deploy shows up on the next load.
-const CACHE = "moodboard-v5";
+const CACHE = "moodboard-v6";
 const SHELL = ["./", "index.html", "styles.css", "app.js", "haptics.js", "store.js", "config.js", "seed.js", "icon.svg", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
@@ -13,7 +13,7 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
   e.respondWith(
-    fetch(e.request)
+    fetch(e.request, { cache: "no-cache" }) // revalidate, so a deploy shows up on the next load rather than after GitHub's 10-minute cache
       .then((res) => { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(e.request, copy)); return res; })
       .catch(() => caches.match(e.request, { ignoreSearch: true })),
   );

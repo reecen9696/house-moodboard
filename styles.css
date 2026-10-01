@@ -16,7 +16,8 @@
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; background: var(--bg); color: var(--text); overscroll-behavior: none; }
+/* The page itself never scrolls or bounces; #main is the only scroller, so the nav stays put */
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--text); overscroll-behavior: none; }
 body {
   font: 15px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -29,7 +30,7 @@ svg { width: 24px; height: 24px; fill: currentColor; flex: none; }
 [hidden] { display: none !important; }
 
 /* ---------- the wall ---------- */
-main { min-height: 100vh; padding-bottom: calc(70px + var(--sab)); touch-action: pan-x pan-y; }
+main { position: fixed; inset: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: none; padding-bottom: calc(70px + var(--sab)); touch-action: pan-x pan-y; }
 #view { position: relative; transform-origin: 50% 0; }
 /* Rows off screen skip layout and paint, which keeps long boards smooth */
 .row { content-visibility: auto; contain-intrinsic-size: auto 200px; }
@@ -71,7 +72,7 @@ section.group { position: relative; }
 .label b { font-size: 14.5px; font-weight: 600; }
 .label small { font-size: 12px; opacity: .65; }
 
-.empty { min-height: 80vh; display: grid; place-content: center; text-align: center; padding: 24px; color: var(--muted); }
+.empty { min-height: 70dvh; display: grid; place-content: center; text-align: center; padding: 24px; color: var(--muted); }
 .empty b { display: block; color: var(--text); font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 6px; }
 
 /* selecting */
