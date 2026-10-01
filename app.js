@@ -153,20 +153,27 @@ function sectionHtml(s, width) {
   return `<section class="group"><div class="label">${label}</div>${body}</section>`;
 }
 
+// Links split into houses (listings) and everything else. Older links have no kind saved, so guess from the URL.
+const isHouse = (s) => {
+  if (s.kind) return s.kind === "listing";
+  const path = new URL(s.url).pathname;
+  return (/\/(?:property|listing|sale|buy|sold|rent)/i.test(path) && /\d/.test(path)) || !!addressFromUrl(s.url);
+};
+
 function linksHtml() {
   if (!state.sources.length) return `<div class="empty"><b>No links yet</b>Tap + and paste a listing, article or product.</div>`;
-  return `<h1 class="title">Links</h1><ul class="links">${state.sources.map((s) => {
-    const its = state.items.filter((i) => i.source_id === s.id);
-    const thumb = its[0] && store.src(its[0]);
-    const meta = [host(s.url), state.busy.has(s.id) ? "adding photos…" : its.length ? photos(its.length) : ""].filter(Boolean).join(" · ");
+  const row = (s) => {
+    const first = state.items.find((i) => i.source_id === s.id);
     return `<li>
       <a href="${esc(s.url)}" target="_blank" rel="noopener">
-        <span class="thumb">${thumb ? `<img src="${esc(thumb)}" alt="" loading="lazy">` : ICON.link}</span>
-        <span class="text"><b>${esc(s.title)}</b>${s.summary ? `<span>${esc(s.summary)}</span>` : ""}<small>${esc(meta)}</small></span>
+        <span class="thumb">${first ? `<img src="${esc(store.src(first))}" alt="" loading="lazy">` : ICON.link}</span>
+        <b>${esc(s.title)}</b>
       </a>
       <button data-act="remove-source" data-id="${esc(s.id)}" aria-label="Remove link">${ICON.close}</button>
     </li>`;
-  }).join("")}</ul>`;
+  };
+  const group = (title, list) => (list.length ? `<h2 class="links-head">${title}</h2><ul class="links">${list.map(row).join("")}</ul>` : "");
+  return `<h1 class="title">Links</h1>${group("Houses", state.sources.filter(isHouse))}${group("Other", state.sources.filter((s) => !isHouse(s)))}`;
 }
 
 function tileHtml(item, ratio, row) {
@@ -577,6 +584,7 @@ async function addLink(raw) {
   }
   $("#toast").hidden = true;
   const existing = state.sources.find((s) => sameUrl(s.url, url) || sameUrl(s.url, page.url));
+  if (addressFromUrl(page.url) || addressFromUrl(url)) page.kind = "listing"; // a street address in the URL means a house, AI or not
   if (page.kind === "listing") {
     // Listings are named by address; agents' page titles are usually slogans
     if (!/^\d/.test(page.title)) page.title = addressFromUrl(page.url) || addressFromUrl(url) || page.title;
@@ -618,7 +626,7 @@ async function saveLink(page, existing, urls, room) {
   let source = existing;
   try {
     if (!source) {
-      source = await store.addSource({ url: cleanUrl(page.url), title: page.title, summary: page.summary || "" });
+      source = await store.addSource({ url: cleanUrl(page.url), title: page.title, summary: page.summary || "", kind: page.kind === "listing" ? "listing" : "other" });
       state.sources.unshift(source);
     }
   } catch (e) {

@@ -8,6 +8,7 @@ export const SEED = [
     source: {
       url: "https://www.jelliscraig.com.au/property-details-21-Heller-Street-Brunswick/1973239",
       title: "21 Heller Street, Brunswick",
+      kind: "listing",
       summary: "Federation house reimagined: period front rooms, a contemporary open-plan rear, and bifolds onto a deck and garden.",
     },
     photos: [

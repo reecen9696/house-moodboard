@@ -87,15 +87,14 @@ section.group { position: relative; }
 
 /* ---------- links ---------- */
 .title { margin: 0; padding: calc(18px + var(--sat)) 18px 10px; font-size: 30px; font-weight: 800; letter-spacing: -.03em; }
+.links-head { margin: 14px 18px 4px; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
 .links { list-style: none; margin: 0; padding: 0 8px; }
-.links li { display: flex; align-items: center; gap: 4px; border-radius: 16px; }
-.links a { flex: 1; min-width: 0; display: flex; gap: 14px; align-items: center; padding: 10px; color: inherit; text-decoration: none; }
-.links .thumb { flex: none; width: 64px; height: 64px; background: var(--fill); display: grid; place-items: center; overflow: hidden; color: var(--muted); }
+.links li { display: flex; align-items: center; gap: 4px; }
+.links a { flex: 1; min-width: 0; display: flex; gap: 12px; align-items: center; padding: 6px 10px; color: inherit; text-decoration: none; }
+.links .thumb { flex: none; width: 40px; height: 40px; background: var(--fill); display: grid; place-items: center; overflow: hidden; color: var(--muted); }
+.links .thumb svg { width: 20px; height: 20px; }
 .links .thumb img { width: 100%; height: 100%; object-fit: cover; }
-.links .text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.links b { font-size: 15.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.links .text span { font-size: 13.5px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.links small { font-size: 12.5px; color: var(--muted); }
+.links b { min-width: 0; font-size: 15.5px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .links li > button { flex: none; height: 40px; min-width: 40px; padding: 0 8px; border-radius: 999px; display: grid; place-items: center; color: var(--muted); font-size: 13px; font-weight: 600; white-space: nowrap; }
 .links li > button svg { width: 20px; height: 20px; }
 .links li > button.armed { background: var(--danger); color: #fff; padding: 0 14px; }
