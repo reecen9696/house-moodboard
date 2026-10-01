@@ -5,23 +5,17 @@
 const uuid = () => crypto.randomUUID();
 const now = () => new Date().toISOString();
 
-// Free preview API, used when the scraper is unavailable or a site blocks it (e.g. realestate.com.au)
-async function microlink(url) {
+// What a pasted link becomes without the backend: title, description and cover image from a free preview API
+async function preview(url) {
   const res = await fetch(`https://api.microlink.io/?url=${encodeURIComponent(url)}`);
   const body = await res.json();
   if (body.status !== "success") throw new Error(body.message || "Could not read that link");
   const d = body.data;
-  const image = d.image?.url || null;
   const site = new URL(url).hostname.replace(/^www\./, "").split(".")[0];
   // "A Beginner's Guide to Green Walls - realestate.com.au" → drop the site-name suffix
   const title = (d.title || "").replace(/\s+[-|–—]\s+([^-|–—]{2,40})$/, (m, tail) => (tail.toLowerCase().includes(site) ? "" : m));
-  return { url: d.url || url, title: title || new URL(url).hostname, description: d.description || "", image, images: image ? [image] : [], others: [], limited: true };
-}
-
-// What a pasted link becomes when no AI is available
-async function basicAnalyze(url) {
-  const page = await microlink(url);
-  return { ...page, kind: "idea", summary: page.description, room: "other", tags: [], picked: page.images };
+  const images = d.image?.url ? [d.image.url] : [];
+  return { url: d.url || url, title: title || new URL(url).hostname, summary: d.description || "", kind: "idea", room: "other", images, picked: images };
 }
 
 export async function createStore(config) {
@@ -35,7 +29,6 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
   const sb = createClient(supabaseUrl, supabaseAnonKey);
   const base = supabaseUrl.replace(/\/$/, "");
   const fn = `${base}/functions/v1/scrape`;
-  const publicUrl = (path) => `${base}/storage/v1/object/public/photos/${path}`;
   const { data: { session } } = await sb.auth.getSession();
   let user = session?.user || null;
 
@@ -44,38 +37,36 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
     const { data: { session } } = await sb.auth.getSession();
     return { Authorization: `Bearer ${session?.access_token}`, apikey: supabaseAnonKey };
   };
+  const post = async (body) => fetch(fn, {
+    method: "POST",
+    headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 
   return {
     mode: "cloud",
     get user() { return user; },
-    onAuth(cb) { sb.auth.onAuthStateChange((_e, s) => { user = s?.user || null; cb(user); }); },
     async signIn(email, password) { user = check(await sb.auth.signInWithPassword({ email, password })).user; },
     async signUp(email, password) {
       const d = check(await sb.auth.signUp({ email, password }));
       if (!d.session) throw new Error("Check your email to confirm the account, then sign in.");
       user = d.user;
     },
-    async signOut() { await sb.auth.signOut(); user = null; },
 
     async load() {
-      const [items, properties] = await Promise.all([
+      const [items, sources] = await Promise.all([
         sb.from("items").select("*").order("created_at", { ascending: false }).then(check),
-        sb.from("properties").select("*").order("created_at", { ascending: false }).then(check),
+        sb.from("sources").select("*").order("created_at", { ascending: false }).then(check),
       ]);
-      return { items, properties };
+      return { items, sources };
     },
     src(item, size = "thumb") {
       const path = size === "thumb" ? item.thumb_path || item.full_path : item.full_path || item.thumb_path;
-      return path ? publicUrl(path) : item.remote_url;
+      return path ? `${base}/storage/v1/object/public/photos/${path}` : item.remote_url;
     },
 
-    async addProperty(p) { return check(await sb.from("properties").insert(p).select().single()); },
-    async updateProperty(id, patch) { return check(await sb.from("properties").update(patch).eq("id", id).select().single()); },
-    async deleteProperty(p, items) {
-      await removeFiles(items);
-      check(await sb.from("properties").delete().eq("id", p.id)); // items cascade
-    },
-
+    async addSource(row) { return check(await sb.from("sources").insert(row).select().single()); },
+    async deleteSource(id) { check(await sb.from("sources").delete().eq("id", id)); },
     async addPhoto({ full, thumb, ...row }) {
       const id = uuid();
       const full_path = `${user.id}/${id}.jpg`, thumb_path = `${user.id}/${id}_t.jpg`;
@@ -88,40 +79,21 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
     },
     async addRemotePhoto(row) { return check(await sb.from("items").insert(row).select().single()); },
     async updateItem(id, patch) { return check(await sb.from("items").update(patch).eq("id", id).select().single()); },
-    async deleteItem(item) {
-      await removeFiles([item]);
-      check(await sb.from("items").delete().eq("id", item.id));
-    },
     async deleteItems(items) {
-      await removeFiles(items);
+      const paths = items.flatMap((i) => [i.full_path, i.thumb_path]).filter(Boolean);
+      if (paths.length) await sb.storage.from("photos").remove(paths);
       check(await sb.from("items").delete().in("id", items.map((i) => i.id)));
     },
 
-    async scrape(url) {
-      try {
-        const res = await fetch(`${fn}?url=${encodeURIComponent(url)}`, { headers: await authHeaders() });
-        const body = await res.json();
-        if (!res.ok) throw new Error(body.error || res.statusText);
-        if (body.images.length) return body;
-        return { ...body, ...(await microlink(url).catch(() => ({}))), images: body.images };
-      } catch (e) {
-        console.warn("scrape failed, falling back to preview", e);
-        return microlink(url);
-      }
-    },
     async analyze(url) {
       try {
-        const res = await fetch(fn, {
-          method: "POST",
-          headers: { ...(await authHeaders()), "Content-Type": "application/json" },
-          body: JSON.stringify({ analyze: url }),
-        });
+        const res = await post({ analyze: url });
         const body = await res.json();
         if (!res.ok) throw new Error(body.error || res.statusText);
         return body;
       } catch (e) {
         console.warn("analyze failed, falling back to preview", e);
-        return basicAnalyze(url);
+        return preview(url);
       }
     },
     async fetchImage(url) {
@@ -129,34 +101,39 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
       if (!res.ok) throw new Error(`Image download failed (${res.status})`);
       return res.blob();
     },
+    // Room for one photo, or null when AI is switched off (no key / no credit)
     async classify(item) {
-      const url = this.src(item, "thumb");
-      if (!url) return null;
-      const res = await fetch(fn, {
-        method: "POST",
-        headers: { ...(await authHeaders()), "Content-Type": "application/json" },
-        body: JSON.stringify({ classify: url }),
-      });
+      const res = await post({ classify: this.src(item, "thumb") });
       const body = await res.json();
-      if (res.status === 501) return null; // no API key configured — AI tagging is optional
+      if (res.status === 501) return null;
       if (!res.ok) throw new Error(body.error || res.statusText);
-      return body;
+      return body.room;
     },
   };
-
-  async function removeFiles(items) {
-    const paths = items.flatMap((i) => [i.full_path, i.thumb_path]).filter(Boolean);
-    if (paths.length) await sb.storage.from("photos").remove(paths);
-  }
 }
 
 /* ---------------- local (IndexedDB) ---------------- */
 
 function idb() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open("moodboard", 1);
-    req.onupgradeneeded = () => {
-      for (const name of ["items", "properties", "blobs"]) req.result.createObjectStore(name, { keyPath: "id" });
+    const req = indexedDB.open("moodboard", 2);
+    req.onupgradeneeded = (e) => {
+      const db = req.result, tx = req.transaction;
+      for (const name of ["items", "sources", "blobs"]) {
+        if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: "id" });
+      }
+      if (e.oldVersion === 1) { // v1 called sources "properties"
+        tx.objectStore("properties").getAll().onsuccess = (ev) => {
+          for (const p of ev.target.result) tx.objectStore("sources").put({ ...p, summary: p.summary || p.description || "" });
+        };
+        tx.objectStore("items").openCursor().onsuccess = (ev) => {
+          const c = ev.target.result;
+          if (!c) return;
+          const { property_id, source_url, ...rest } = c.value;
+          c.update({ ...rest, source_id: property_id ?? null, origin_url: source_url ?? null });
+          c.continue();
+        };
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
@@ -174,61 +151,47 @@ async function localStore() {
   const all = (s) => tx(s, "readonly", (o) => o.getAll());
   const put = (s, v) => tx(s, "readwrite", (o) => o.put(v)).then(() => v);
   const del = (s, id) => tx(s, "readwrite", (o) => o.delete(id));
-  const urls = new Map(); // blob id -> object URL
   const byDate = (a, b) => b.created_at.localeCompare(a.created_at);
-
-  const blobs = await all("blobs");
-  for (const b of blobs) urls.set(b.id, URL.createObjectURL(b.blob));
-
-  const rowDefaults = { note: "", tags: [], features: [], palette: [], room: null, style: null, fav: false, property_id: null };
+  const urls = new Map(); // blob id -> object URL
+  for (const b of await all("blobs")) urls.set(b.id, URL.createObjectURL(b.blob));
 
   return {
     mode: "local",
-    user: { id: "local", email: "this browser" },
-    onAuth() {},
+    user: { id: "local" },
     async load() {
-      return { items: (await all("items")).sort(byDate), properties: (await all("properties")).sort(byDate) };
+      return { items: (await all("items")).sort(byDate), sources: (await all("sources")).sort(byDate) };
     },
     src(item, size = "thumb") {
       const key = size === "thumb" ? item.thumb_path || item.full_path : item.full_path || item.thumb_path;
       return (key && urls.get(key)) || item.remote_url;
     },
-    async addProperty(p) {
-      return put("properties", { id: uuid(), created_at: now(), note: "", description: "", kind: "listing", summary: "", room: null, tags: [], ...p });
-    },
-    async updateProperty(id, patch) {
-      const p = (await all("properties")).find((x) => x.id === id);
-      return put("properties", { ...p, ...patch });
-    },
-    async deleteProperty(p, items) {
-      for (const i of items) await this.deleteItem(i);
-      await del("properties", p.id);
-    },
+    async addSource(row) { return put("sources", { id: uuid(), created_at: now(), ...row }); },
+    async deleteSource(id) { await del("sources", id); },
     async addPhoto({ full, thumb, ...row }) {
       const id = uuid();
-      const full_path = `${id}`, thumb_path = `${id}_t`;
+      const full_path = id, thumb_path = `${id}_t`;
       await put("blobs", { id: full_path, blob: full });
       await put("blobs", { id: thumb_path, blob: thumb });
       urls.set(full_path, URL.createObjectURL(full));
       urls.set(thumb_path, URL.createObjectURL(thumb));
-      return put("items", { ...rowDefaults, id, created_at: now(), full_path, thumb_path, ...row });
+      return put("items", { id, created_at: now(), full_path, thumb_path, ...row });
     },
-    async addRemotePhoto(row) { return put("items", { ...rowDefaults, id: uuid(), created_at: now(), ...row }); },
+    async addRemotePhoto(row) { return put("items", { id: uuid(), created_at: now(), ...row }); },
     async updateItem(id, patch) {
-      const i = (await all("items")).find((x) => x.id === id);
-      return put("items", { ...i, ...patch });
+      const item = (await all("items")).find((x) => x.id === id);
+      return put("items", { ...item, ...patch });
     },
-    async deleteItem(item) {
-      for (const k of [item.full_path, item.thumb_path].filter(Boolean)) {
-        await del("blobs", k);
-        URL.revokeObjectURL(urls.get(k));
-        urls.delete(k);
+    async deleteItems(items) {
+      for (const item of items) {
+        for (const k of [item.full_path, item.thumb_path].filter(Boolean)) {
+          await del("blobs", k);
+          URL.revokeObjectURL(urls.get(k));
+          urls.delete(k);
+        }
+        await del("items", item.id);
       }
-      await del("items", item.id);
     },
-    async deleteItems(items) { for (const i of items) await this.deleteItem(i); },
-    scrape: microlink,
-    analyze: basicAnalyze,
+    analyze: preview,
     async fetchImage(url) {
       const res = await fetch(url, { mode: "cors" }); // works only if the image host allows CORS
       if (!res.ok) throw new Error(res.statusText);
