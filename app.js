@@ -747,13 +747,23 @@ function showLogin() {
   form.up.onclick = () => go((a, b) => store.signUp(a, b));
 }
 
-async function seedIfEmpty() {
+async function seed() {
   const key = `seeded:${store.user.id}`;
-  if (state.items.length || state.sources.length || ls.get(key, false)) return;
-  ls.set(key, true);
-  const source = await store.addSource(SEED.source);
-  state.sources.unshift(source);
-  await importImages(SEED.photos.map((p) => p.url), source.id, (url) => SEED.photos.find((p) => p.url === url).room);
+  let done = ls.get(key, []);
+  if (done === true) done = SEED[0].photos.map((p) => p.url); // boards seeded before the list could grow
+  for (const group of SEED) {
+    const todo = group.photos.filter((p) => !done.includes(p.url));
+    if (!todo.length) continue;
+    ls.set(key, (done = [...done, ...todo.map((p) => p.url)]));
+    let sourceId = null;
+    if (group.source) {
+      const existing = state.sources.find((s) => sameUrl(s.url, group.source.url));
+      const source = existing || await store.addSource(group.source);
+      if (!existing) state.sources.unshift(source);
+      sourceId = source.id;
+    }
+    await importImages(todo.map((p) => p.url), sourceId, (url) => todo.find((p) => p.url === url).room);
+  }
 }
 
 async function start() {
@@ -768,7 +778,7 @@ async function start() {
   const q = new URLSearchParams(location.search);
   const shared = firstUrl(q.get("url")) || firstUrl(q.get("text")) || firstUrl(q.get("title"));
   if (shared) { history.replaceState(null, "", location.pathname); addLink(shared); }
-  else seedIfEmpty().catch((e) => console.warn("seed failed", e));
+  else seed().catch((e) => console.warn("seed failed", e));
 }
 
 async function boot() {
