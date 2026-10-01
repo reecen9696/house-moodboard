@@ -1,6 +1,7 @@
 import { config } from "./config.js";
 import { createStore } from "./store.js";
 import { SEED } from "./seed.js";
+import { haptic, installButtonHaptics } from "./haptics.js";
 
 /* ---------------- constants & helpers ---------------- */
 
@@ -24,6 +25,7 @@ const ICON = {
   trash: svg("M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"),
   paste: svg("M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z"),
   image: svg("M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"),
+  more: svg("M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"),
   go: svg("M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"),
 };
 
@@ -187,8 +189,11 @@ function renderNow() {
   if (state.view === "links") view.innerHTML = linksHtml();
   else {
     const secs = sections();
-    view.innerHTML = secs.length ? secs.map((s) => sectionHtml(s, width)).join("")
-      : `<div class="empty"><b>Your mood board is empty</b>Tap + to paste a link or add photos.</div>`;
+    // Rooms toggle sits on the page (top right) and scrolls away with it
+    const toggle = state.items.length && !state.selected
+      ? `<button class="rooms-toggle${state.view === "rooms" ? " on" : ""}" data-act="view" data-val="${state.view === "rooms" ? "home" : "rooms"}" aria-label="${state.view === "rooms" ? "Show all photos" : "Sort by room"}">${ICON.sofa}</button>` : "";
+    view.innerHTML = toggle + (secs.length ? secs.map((s) => sectionHtml(s, width)).join("")
+      : `<div class="empty"><b>Your mood board is empty</b>Tap + to paste a link or add photos.</div>`);
   }
   renderNav();
 }
@@ -197,7 +202,7 @@ function renderNav() {
   const sel = state.selected;
   if (!sel) {
     const tab = (val, icon, name) => `<button data-act="view" data-val="${val}" class="${state.view === val ? "on" : ""}" aria-label="${name}">${icon}</button>`;
-    $("#nav").innerHTML = `<div class="side">${tab("home", ICON.home, "All photos")}${tab("rooms", ICON.sofa, "By room")}</div>
+    $("#nav").innerHTML = `<div class="side"><button data-act="view" data-val="${state.view === "rooms" ? "rooms" : "home"}" class="${state.view === "links" ? "" : "on"}" aria-label="Photos">${ICON.home}</button></div>
       <button data-act="add" class="add" aria-label="Add">${ICON.add}</button>
       <div class="side">${tab("links", ICON.link, "Links")}</div>`;
     return;
@@ -238,10 +243,9 @@ function setupZoom() {
   }, { passive: true });
   main.addEventListener("touchmove", (e) => {
     if (!pinch || e.touches.length !== 2) return;
-    e.preventDefault();
     pinch.scale = dist(e.touches) / pinch.d0;
     view.style.transform = `scale(${clamp(pinch.scale, 0.5, 2)})`;
-  }, { passive: false });
+  }, { passive: true }); // passive keeps one-finger scrolling off the main thread
   const end = (e) => {
     if (!pinch || e.touches.length >= 2) return;
     const { scale, anchor } = pinch;
@@ -252,7 +256,7 @@ function setupZoom() {
   };
   main.addEventListener("touchend", end);
   main.addEventListener("touchcancel", end);
-  document.addEventListener("gesturestart", (e) => e.preventDefault()); // stop iOS zooming the page
+  document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false }); // stop iOS zooming the page
 
   let acc = 0, accTimer; // trackpad pinch arrives as ctrl+wheel
   window.addEventListener("wheel", (e) => {
@@ -318,7 +322,7 @@ function setupLongPress() {
     timer = setTimeout(() => {
       timer = null;
       suppressClick = true;
-      navigator.vibrate?.(10);
+      haptic("hold");
       setSelecting(true, tile.dataset.id);
     }, 450);
   });
@@ -331,24 +335,30 @@ function setupLongPress() {
 
 /* ---------------- viewer ---------------- */
 
-const viewer = { list: [], index: 0, open: false };
+const viewer = { list: [], index: 0, open: false, info: false, bare: false };
 const currentItem = () => state.items.find((i) => i.id === viewer.list[viewer.index]?.id);
 
 function openViewer(id) {
   viewer.list = sections().flatMap((s) => s.items);
   viewer.index = Math.max(0, viewer.list.findIndex((i) => i.id === id));
+  viewer.info = viewer.bare = false;
   drawViewer();
   if (!viewer.open) { viewer.open = true; pushLayer(hideViewer); }
 }
 function drawViewer() {
   const el = $("#viewer");
   el.innerHTML = `
-    <div class="strip">${viewer.list.map((i) => `<div class="slide"><img src="${esc(store.src(i, "full"))}" alt="" loading="lazy" decoding="async"></div>`).join("")}</div>
-    <button class="vbtn close" data-v="close" aria-label="Close">${ICON.close}</button>
-    <button class="vbtn trash" data-v="delete" aria-label="Delete">${ICON.trash}</button>
+    <div class="strip">${viewer.list.map((i) => `<div class="slide"><img src="${esc(store.src(i, "full"))}" alt="" loading="lazy" decoding="async" draggable="false"></div>`).join("")}</div>
+    <div class="vbar">
+      <button class="vbtn" data-v="close" aria-label="Close">${ICON.close}</button>
+      <span class="spacer"></span>
+      <button class="vbtn trash" data-v="delete" aria-label="Delete">${ICON.trash}</button>
+      <button class="vbtn" data-v="info" aria-label="Details">${ICON.more}</button>
+    </div>
     <div class="cap"></div>`;
   el.hidden = false;
   document.body.style.overflow = "hidden";
+  syncChrome();
   const strip = $(".strip", el);
   strip.scrollLeft = viewer.index * strip.clientWidth;
   drawCaption();
@@ -357,15 +367,22 @@ function drawViewer() {
     clearTimeout(t);
     t = setTimeout(() => {
       const i = Math.round(strip.scrollLeft / strip.clientWidth);
-      if (i !== viewer.index) { viewer.index = i; drawCaption(); }
+      if (i !== viewer.index) { resetZoom(); viewer.index = i; drawCaption(); }
     }, 60);
   });
+  setupPhotoGestures(strip);
 }
 function hideViewer() {
   viewer.open = false;
   $("#viewer").hidden = true;
   $("#viewer").innerHTML = "";
   document.body.style.overflow = "";
+}
+// Tap the photo to hide/show the buttons; ⋮ shows the details panel
+function syncChrome() {
+  const el = $("#viewer");
+  el.classList.toggle("bare", viewer.bare);
+  el.classList.toggle("info", viewer.info && !viewer.bare);
 }
 function drawCaption() {
   const item = currentItem(), cap = $("#viewer .cap");
@@ -375,14 +392,16 @@ function drawCaption() {
   trash.classList.remove("armed");
   trash.innerHTML = ICON.trash;
   cap.innerHTML = `
-    ${s ? `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener"><b>${esc(s.title)}</b>${s.summary ? `<p>${esc(s.summary)}</p>` : ""}<small>${esc(host(s.url))} ↗</small></a>` : `<div class="src"></div>`}
+    ${s ? `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener"><b>${esc(s.title)}</b>${s.summary ? `<p>${esc(s.summary)}</p>` : ""}<small>${esc(host(s.url))} ↗</small></a>` : `<div class="src"><b>Your photo</b><small>${esc(new Date(item.created_at).toLocaleDateString())}</small></div>`}
     <label class="roompill">${ICON.sofa}${ROOMS[item.room] || (state.pending.has(item.id) ? "Sorting…" : "Room")}
       <select>${ROOMS[item.room] ? "" : `<option value="" disabled selected>Room</option>`}${Object.entries(ROOMS).map(([k, v]) => `<option value="${k}"${item.room === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>`;
 }
 async function onViewerClick(e) {
   const btn = e.target.closest("[data-v]");
-  if (btn?.dataset.v === "close") return popLayer();
-  if (btn?.dataset.v !== "delete") return;
+  if (!btn) return;
+  if (btn.dataset.v === "close") return popLayer();
+  if (btn.dataset.v === "info") { viewer.info = !viewer.info; return syncChrome(); }
+  if (btn.dataset.v !== "delete") return;
   if (!btn.classList.contains("armed")) { btn.classList.add("armed"); btn.textContent = "Delete?"; return; }
   const item = currentItem();
   if (!item || !(await deleteItems([item]))) return;
@@ -390,6 +409,110 @@ async function onViewerClick(e) {
   if (!viewer.list.length) return popLayer();
   viewer.index = Math.min(viewer.index, viewer.list.length - 1);
   drawViewer();
+}
+
+/* Two-finger zoom, drag to pan when zoomed, double-tap to zoom in/out, single tap toggles the buttons */
+const pz = { s: 1, x: 0, y: 0 };
+const currentImg = () => $("#viewer .strip")?.children[viewer.index]?.querySelector("img");
+function applyZoom(animate = false) {
+  const img = currentImg(), strip = $("#viewer .strip");
+  if (!img) return;
+  img.style.transition = animate ? "transform .25s ease" : "none";
+  img.style.transform = pz.s === 1 ? "" : `translate(${pz.x}px, ${pz.y}px) scale(${pz.s})`;
+  strip.style.overflowX = pz.s > 1 ? "hidden" : ""; // no swiping to the next photo while zoomed
+}
+function resetZoom(animate = false) { pz.s = 1; pz.x = 0; pz.y = 0; applyZoom(animate); }
+// Keep the photo covering the screen instead of drifting off it
+function clampPan() {
+  const img = currentImg();
+  if (!img) return;
+  const w = img.clientWidth * pz.s, h = img.clientHeight * pz.s;
+  const mx = Math.max(0, (w - innerWidth) / 2), my = Math.max(0, (h - innerHeight) / 2);
+  pz.x = clamp(pz.x, -mx, mx);
+  pz.y = clamp(pz.y, -my, my);
+}
+
+function setupPhotoGestures(strip) {
+  const centre = () => ({ x: innerWidth / 2, y: innerHeight / 2 });
+  const mid = (t) => ({ x: (t[0].clientX + t[1].clientX) / 2, y: (t[0].clientY + t[1].clientY) / 2 });
+  const dist = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+  let g = null, moved = false, lastTap = 0, tapTimer;
+
+  strip.addEventListener("touchstart", (e) => {
+    const c = centre();
+    if (e.touches.length === 2) {
+      const m = mid(e.touches);
+      // the image point under the fingers, so it stays under them while zooming
+      g = { kind: "pinch", d0: dist(e.touches), s0: pz.s, px: (m.x - c.x - pz.x) / pz.s, py: (m.y - c.y - pz.y) / pz.s };
+      moved = true;
+    } else if (e.touches.length === 1) {
+      moved = false;
+      g = pz.s > 1 ? { kind: "pan", x0: e.touches[0].clientX - pz.x, y0: e.touches[0].clientY - pz.y } : { kind: "tap", x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }
+  }, { passive: true });
+
+  strip.addEventListener("touchmove", (e) => {
+    if (!g) return;
+    const c = centre();
+    if (g.kind === "pinch" && e.touches.length === 2) {
+      e.preventDefault();
+      const m = mid(e.touches);
+      pz.s = clamp(g.s0 * dist(e.touches) / g.d0, 1, 5);
+      pz.x = m.x - c.x - g.px * pz.s;
+      pz.y = m.y - c.y - g.py * pz.s;
+      applyZoom();
+    } else if (g.kind === "pan" && e.touches.length === 1) {
+      e.preventDefault();
+      moved = true;
+      pz.x = e.touches[0].clientX - g.x0;
+      pz.y = e.touches[0].clientY - g.y0;
+      clampPan();
+      applyZoom();
+    } else if (g.kind === "tap" && Math.hypot(e.touches[0].clientX - g.x, e.touches[0].clientY - g.y) > 10) {
+      moved = true;
+    }
+  }, { passive: false });
+
+  strip.addEventListener("touchend", (e) => {
+    if (!g || e.touches.length) return;
+    const was = g;
+    g = null;
+    if (was.kind === "pinch") {
+      if (pz.s < 1.05) resetZoom(true); else { clampPan(); applyZoom(true); }
+      return;
+    }
+    if (moved) return;
+    const now = Date.now();
+    if (now - lastTap < 280) { // double tap
+      clearTimeout(tapTimer);
+      lastTap = 0;
+      if (pz.s > 1) return resetZoom(true);
+      const c = centre(), t = e.changedTouches[0];
+      pz.s = 2.5;
+      pz.x = -(t.clientX - c.x) * 1.5;
+      pz.y = -(t.clientY - c.y) * 1.5;
+      clampPan();
+      return applyZoom(true);
+    }
+    lastTap = now;
+    tapTimer = setTimeout(() => { viewer.bare = !viewer.bare; syncChrome(); }, 280);
+  });
+
+  // Mouse: click toggles the buttons, double-click zooms
+  strip.addEventListener("click", (e) => {
+    if (e.pointerType === "touch" || e.sourceCapabilities?.firesTouchEvents) return;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(() => { viewer.bare = !viewer.bare; syncChrome(); }, 250);
+  });
+  strip.addEventListener("dblclick", (e) => {
+    clearTimeout(tapTimer);
+    if (pz.s > 1) return resetZoom(true);
+    pz.s = 2.5;
+    pz.x = -(e.clientX - innerWidth / 2) * 1.5;
+    pz.y = -(e.clientY - innerHeight / 2) * 1.5;
+    clampPan();
+    applyZoom(true);
+  });
 }
 
 /* ---------------- sheet ---------------- */
@@ -558,6 +681,7 @@ async function addAll(list, limit, add) {
     }
   }));
   toast(failed ? `Added ${photos(done - failed)}, ${failed} failed` : `Added ${photos(done)}`);
+  if (done > failed) haptic("success");
 }
 
 // Copies remote images into storage so they survive the listing coming down; links to the original if that fails
@@ -648,7 +772,7 @@ async function onAct(act, el) {
       return toast(`Tap again to delete ${photos(sel.size)}`);
     }
     const items = selectedItems();
-    if (await deleteItems(items)) toast(`Deleted ${photos(items.length)}`);
+    if (await deleteItems(items)) { toast(`Deleted ${photos(items.length)}`); haptic("success"); }
     setSelecting(false);
   }
   if (act === "remove-source") {
@@ -668,6 +792,7 @@ async function onAct(act, el) {
 }
 
 function bindEvents() {
+  installButtonHaptics((e) => suppressClick && e.target.closest("#view .tile"));
   document.addEventListener("click", (e) => {
     const tile = e.target.closest("#view .tile");
     if (suppressClick) { suppressClick = false; if (tile) return; }
@@ -681,6 +806,7 @@ function bindEvents() {
     setSelecting(false);
     await Promise.all(items.map((i) => patchItem(i.id, { room })));
     toast(`Moved ${photos(items.length)} to ${ROOMS[room]}`);
+    haptic("success");
   });
   $("#backdrop").onclick = closeSheet;
   $("#viewer").onclick = onViewerClick;
@@ -708,6 +834,7 @@ function bindEvents() {
       if (e.key === "ArrowRight") strip.scrollBy({ left: strip.clientWidth, behavior: "smooth" });
       if (e.key === "ArrowLeft") strip.scrollBy({ left: -strip.clientWidth, behavior: "smooth" });
       if (e.key === "Escape") popLayer();
+      if (e.key === "i") { viewer.info = !viewer.info; syncChrome(); }
       return;
     }
     if (e.key === "Escape") state.selected ? setSelecting(false) : closeSheet();
