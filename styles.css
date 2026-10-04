@@ -211,6 +211,16 @@ section.group { position: relative; }
 .login input { height: 52px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--fill); outline: none; font-size: 16px; }
 .login .err { min-height: 1.2em; margin: 0; color: var(--danger); font-size: 14px; }
 .login .ghost { height: 44px; font-weight: 600; color: var(--muted); }
+.login form { align-items: center; text-align: center; }
+.login .hint { margin: -6px 0 18px; color: var(--muted); font-size: 15px; }
+.login .pin { position: relative; display: flex; gap: 14px; cursor: text; }
+.login .pin input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; opacity: 0; font-size: 16px; caret-color: transparent; }
+.login .pin span { width: 58px; height: 68px; border-radius: 16px; background: var(--fill); display: grid; place-items: center; box-shadow: inset 0 0 0 2px transparent; transition: box-shadow .15s; }
+.login .pin span.at { box-shadow: inset 0 0 0 2px var(--text); }
+.login .pin span.on::after { content: ""; width: 14px; height: 14px; border-radius: 50%; background: var(--text); }
+.login .err { margin-top: 10px; }
+.login form.shake .pin { animation: shake .4s; }
+@keyframes shake { 20%, 60% { transform: translateX(-10px); } 40%, 80% { transform: translateX(10px); } }
 
 @keyframes up { from { transform: translateY(100%); } }
 @keyframes fade { from { opacity: 0; } }

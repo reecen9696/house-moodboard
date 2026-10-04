@@ -47,6 +47,17 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
     mode: "cloud",
     get user() { return user; },
     async signIn(email, password) { user = check(await sb.auth.signInWithPassword({ email, password })).user; },
+    // Passcode sign-in: one fixed account, the 4-digit code as (part of) its password, so the code itself is never in
+    // the site's files. The first code ever entered on a fresh backend creates the account; once it exists (and new
+    // sign-ups are switched off in Supabase) any other code just fails.
+    async unlock(pin) {
+      const email = "owner@house-moodboard.app", password = `house-moodboard-${pin}`;
+      const tried = await sb.auth.signInWithPassword({ email, password });
+      if (!tried.error) { user = tried.data.user; return; }
+      const made = await sb.auth.signUp({ email, password });
+      if (made.error || !made.data.session) throw new Error("Wrong passcode");
+      user = made.data.user;
+    },
     async signUp(email, password) {
       const d = check(await sb.auth.signUp({ email, password }));
       if (!d.session) throw new Error("Check your email to confirm the account, then sign in.");

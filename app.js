@@ -858,29 +858,43 @@ function bindEvents() {
 
 /* ---------------- boot ---------------- */
 
+// Passcode screen: four boxes like a phone's lock screen. One hidden numeric input takes the typing (and the phone's
+// number pad); the boxes show a dot per digit. The fourth digit submits; a wrong code shakes and clears.
 function showLogin() {
   const el = $("#login");
   el.hidden = false;
-  el.innerHTML = `<form>
+  el.innerHTML = `<form autocomplete="off">
     <h1>Moodboard</h1>
-    <input name="email" type="email" placeholder="Email" autocomplete="email" required>
-    <input name="password" type="password" placeholder="Password" autocomplete="current-password" minlength="6" required>
+    <p class="hint">Enter passcode</p>
+    <label class="pin">
+      <input name="pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="one-time-code" aria-label="Passcode">
+      <span></span><span></span><span></span><span></span>
+    </label>
     <p class="err"></p>
-    <button class="primary">Sign in</button>
-    <button class="ghost" name="up" type="button">Create account</button>
   </form>`;
-  const form = $("form", el);
-  const go = async (fn) => {
+  const form = $("form", el), input = form.pin, boxes = [...el.querySelectorAll(".pin span")];
+  let busy = false;
+  const paint = () => boxes.forEach((b, i) => { b.classList.toggle("on", i < input.value.length); b.classList.toggle("at", i === Math.min(input.value.length, 3) && !busy); });
+  input.oninput = async () => {
+    input.value = input.value.replace(/\D/g, "").slice(0, 4);
     $(".err", el).textContent = "";
-    if (!form.reportValidity()) return;
+    paint();
+    if (input.value.length < 4 || busy) return;
+    busy = true; paint();
     try {
-      await fn(form.email.value.trim(), form.password.value);
+      await store.unlock(input.value);
       el.hidden = true;
       start();
-    } catch (e) { $(".err", el).textContent = e.message; }
+    } catch (e) {
+      $(".err", el).textContent = e.message;
+      form.classList.remove("shake"); void form.offsetWidth; form.classList.add("shake");
+      input.value = "";
+    }
+    busy = false; paint();
   };
-  form.onsubmit = (e) => { e.preventDefault(); go((a, b) => store.signIn(a, b)); };
-  form.up.onclick = () => go((a, b) => store.signUp(a, b));
+  form.onsubmit = (e) => e.preventDefault();
+  el.onclick = () => input.focus();
+  paint(); input.focus();
 }
 
 async function seed() {
