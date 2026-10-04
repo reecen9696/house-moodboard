@@ -188,6 +188,9 @@ section.group { position: relative; }
 }
 .vbtn.armed { background: var(--danger); padding: 0 16px; }
 .vbtn.chat { position: relative; }
+/* the count sits on the corner, out of the layout: in the button's grid it took a second row and pushed the icon up */
+.vbtn.chat .n { position: absolute; }
+.vbtn.chat .n:empty { display: none; }
 .vbtn.chat .n:not(:empty) {
   position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
   border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
