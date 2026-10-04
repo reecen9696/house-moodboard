@@ -11,7 +11,10 @@ const ROOMS = {
   outdoor: "Outdoor", pool: "Pool", floorplan: "Floor plan", other: "Other",
 };
 const ROW_HEIGHT = [360, 200, 120, 72]; // target row height per zoom level; pinch moves between them
-const GAP = 2; // hairline between photos; keep in sync with --gap in styles.css
+let GAP = 2; // space between photos, read from --gap in styles.css (a hairline on a phone, wider on a desktop)
+// A desktop screen gets bigger rows at every zoom level, so photos aren't thumbnails across a wide window
+const wide = () => matchMedia("(min-width: 900px)").matches;
+const rowHeight = () => ROW_HEIGHT[state.zoom] * (wide() ? 1.5 : 1);
 const MAX_AUTO_IMAGES = 6; // photos saved automatically from an article or product page
 
 // Google Material icons (filled)
@@ -145,7 +148,7 @@ function justify(items, width, target) {
 }
 
 function sectionHtml(s, width) {
-  const body = justify(s.items, width, ROW_HEIGHT[state.zoom]).map((row) =>
+  const body = justify(s.items, width, rowHeight()).map((row) =>
     `<div class="row" style="height:${row.h.toFixed(2)}px">${row.items.map(({ item, ratio }) => tileHtml(item, ratio, row)).join("")}</div>`).join("");
   if (!s.title) return `<section class="group">${body}</section>`;
   const text = `<b>${esc(s.title)}</b>${state.selected ? "<small>Select all</small>" : ""}`;
@@ -191,7 +194,8 @@ function render() {
   requestAnimationFrame(() => { renderQueued = false; renderNow(); });
 }
 function renderNow() {
-  const view = $("#view"), width = $("#main").clientWidth;
+  const view = $("#view"), width = view.clientWidth;
+  GAP = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap")) || 2;
   view.classList.toggle("selecting", !!state.selected);
   if (state.view === "links") view.innerHTML = linksHtml();
   else {
@@ -199,7 +203,9 @@ function renderNow() {
     // Rooms toggle sits on the page (top right) and scrolls away with it
     const toggle = state.items.length && !state.selected
       ? `<button class="rooms-toggle${state.view === "rooms" ? " on" : ""}" data-act="view" data-val="${state.view === "rooms" ? "home" : "rooms"}" aria-label="${state.view === "rooms" ? "Show all photos" : "Sort by room"}">${ICON.sofa}</button>` : "";
-    view.innerHTML = toggle + (secs.length ? secs.map((s) => sectionHtml(s, width)).join("")
+    // desktop only (styles.css): a title over the board, with the count
+    const head = `<header class="dhead"><h1>Moodboard</h1><span>${state.items.length} photo${state.items.length === 1 ? "" : "s"}</span></header>`;
+    view.innerHTML = head + toggle + (secs.length ? secs.map((s) => sectionHtml(s, width)).join("")
       : `<div class="empty"><b>Your mood board is empty</b>Tap + to paste a link or add photos.</div>`);
   }
   renderNav();
@@ -902,7 +908,9 @@ async function seed() {
   let done = ls.get(key, []);
   if (done === true) done = SEED[0].photos.map((p) => p.url); // boards seeded before the list could grow
   for (const group of SEED) {
-    const todo = group.photos.filter((p) => !done.includes(p.url));
+    // also skip any already on the board: "done" lives in this browser only, so a new device or address would re-add them
+    const file = (u) => (u || "").split("?")[0].split("/").pop();
+    const todo = group.photos.filter((p) => !done.includes(p.url) && !state.items.some((i) => file(i.origin_url) === file(p.url)));
     if (!todo.length) continue;
     ls.set(key, (done = [...done, ...todo.map((p) => p.url)]));
     let sourceId = null;
