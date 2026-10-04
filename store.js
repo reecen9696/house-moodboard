@@ -103,9 +103,9 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
       check(await sb.from("items").delete().in("id", items.map((i) => i.id)));
     },
 
-    async analyze(url) {
+    async analyze(url, { art = false } = {}) {
       try {
-        const res = await post({ analyze: url });
+        const res = await post({ analyze: url, art });
         const body = await res.json();
         if (!res.ok) throw new Error(body.error || res.statusText);
         return body;

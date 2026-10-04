@@ -32,7 +32,11 @@ const ICON = {
   go: svg("M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"),
   chat: svg("M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"),
   send: svg("M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"),
+  art: svg("M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm5.5 11c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-3-4c-.83 0-1.5-.67-1.5-1.5S13.67 6 14.5 6s1.5.67 1.5 1.5S15.33 9 14.5 9zM5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S7.33 13 6.5 13 5 12.33 5 11.5zm6-4c0 .83-.67 1.5-1.5 1.5S8 8.33 8 7.5 8.67 6 9.5 6s1.5.67 1.5 1.5z"),
 };
+// Artwork is its own board (the Art tab): its photos have room "art", which keeps them off Home and Rooms
+const ART = "art";
+const isArt = (i) => i.room === ART;
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -49,6 +53,7 @@ function cleanUrl(u) { // drop tracking junk like utm_source and fbclid
     const url = new URL(u.trim());
     for (const k of [...url.searchParams.keys()]) if (/^(utm_|fbclid|gclid|mc_|igshid|si$|ref$|ref_src)/i.test(k)) url.searchParams.delete(k);
     url.hash = "";
+    if (/(^|\.)ebay\./.test(url.hostname) && /^\/itm\//.test(url.pathname)) url.search = ""; // ?itmmeta=…&hash=… is tracking
     return url.href;
   } catch { return u.trim(); }
 }
@@ -71,7 +76,7 @@ const state = {
   items: [],
   sources: [], // pasted links: listings, articles, products
   comments: [], // notes on photos, oldest first
-  view: ["home", "rooms", "links"].includes(ls.get("view")) ? ls.get("view") : "home",
+  view: ["home", "rooms", "links", "art"].includes(ls.get("view")) ? ls.get("view") : "home",
   zoom: clamp(ls.get("zoom", 1), 0, ROW_HEIGHT.length - 1),
   selected: null, // Set of item ids while selecting
   armed: false, // bulk delete waiting for its confirming tap
@@ -111,12 +116,13 @@ function toast(msg, sticky = false) {
 
 // Home is one wall of every photo; Rooms splits it into labelled groups
 function sections() {
+  const items = state.items.filter((i) => isArt(i) === (state.view === "art"));
   if (state.view === "rooms") {
     return [...Object.keys(ROOMS), ""]
-      .map((room) => ({ id: room, title: ROOMS[room] || "Unsorted", items: state.items.filter((i) => (ROOMS[i.room] ? i.room : "") === room) }))
+      .map((room) => ({ id: room, title: ROOMS[room] || "Unsorted", items: items.filter((i) => (ROOMS[i.room] ? i.room : "") === room) }))
       .filter((s) => s.items.length);
   }
-  return state.items.length ? [{ id: "all", title: null, items: state.items }] : [];
+  return items.length ? [{ id: "all", title: null, items }] : [];
 }
 
 // Google Photos-style rows: every photo keeps its shape, every row fills the width
@@ -168,7 +174,7 @@ const isHouse = (s) => {
 };
 
 function linksHtml() {
-  if (!state.sources.length) return `<div class="empty"><b>No links yet</b>Tap + and paste a listing, article or product.</div>`;
+  if (!state.sources.some((s) => s.kind !== ART)) return `<div class="empty"><b>No links yet</b>Tap + and paste a listing, article or product.</div>`;
   const row = (s) => {
     const first = state.items.find((i) => i.source_id === s.id);
     return `<li>
@@ -180,7 +186,8 @@ function linksHtml() {
     </li>`;
   };
   const group = (title, list) => (list.length ? `<h2 class="links-head">${title}</h2><ul class="links">${list.map(row).join("")}</ul>` : "");
-  return `<h1 class="title">Links</h1>${group("Houses", state.sources.filter(isHouse))}${group("Other", state.sources.filter((s) => !isHouse(s)))}`;
+  const sources = state.sources.filter((s) => s.kind !== ART); // those live on the Art tab
+  return `<h1 class="title">Links</h1>${group("Houses", sources.filter(isHouse))}${group("Other", sources.filter((s) => !isHouse(s)))}`;
 }
 
 function tileHtml(item, ratio, row) {
@@ -204,13 +211,15 @@ function renderNow() {
   view.classList.toggle("selecting", !!state.selected);
   if (state.view === "links") view.innerHTML = linksHtml();
   else {
-    const secs = sections();
+    const secs = sections(), art = state.view === "art";
+    const count = secs.reduce((n, s) => n + s.items.length, 0);
     // Rooms toggle sits on the page (top right) and scrolls away with it
-    const toggle = state.items.length && !state.selected
+    const toggle = count && !state.selected && !art
       ? `<button class="rooms-toggle${state.view === "rooms" ? " on" : ""}" data-act="view" data-val="${state.view === "rooms" ? "home" : "rooms"}" aria-label="${state.view === "rooms" ? "Show all photos" : "Sort by room"}">${ICON.sofa}</button>` : "";
     // desktop only (styles.css): a title over the board, with the count
-    const head = `<header class="dhead"><h1>Moodboard</h1><span>${state.items.length} photo${state.items.length === 1 ? "" : "s"}</span></header>`;
+    const head = `<header class="dhead"><h1>${art ? "Artwork" : "Moodboard"}</h1><span>${photos(count)}</span></header>`;
     view.innerHTML = head + toggle + (secs.length ? secs.map((s) => sectionHtml(s, width)).join("")
+      : art ? `<div class="empty"><b>No artwork yet</b>Tap + and paste a link to a piece (eBay, a gallery, an artist's site).</div>`
       : `<div class="empty"><b>Your mood board is empty</b>Tap + to paste a link or add photos.</div>`);
   }
   renderNav();
@@ -220,7 +229,7 @@ function renderNav() {
   const sel = state.selected;
   if (!sel) {
     const tab = (val, icon, name) => `<button data-act="view" data-val="${val}" class="${state.view === val ? "on" : ""}" aria-label="${name}">${icon}</button>`;
-    $("#nav").innerHTML = `<div class="side"><button data-act="view" data-val="${state.view === "rooms" ? "rooms" : "home"}" class="${state.view === "links" ? "" : "on"}" aria-label="Photos">${ICON.home}</button></div>
+    $("#nav").innerHTML = `<div class="side"><button data-act="view" data-val="${state.view === "rooms" ? "rooms" : "home"}" class="${["home", "rooms"].includes(state.view) ? "on" : ""}" aria-label="Photos">${ICON.home}</button>${tab("art", ICON.art, "Artwork")}</div>
       <button data-act="add" class="add" aria-label="Add">${ICON.add}</button>
       <div class="side">${tab("links", ICON.link, "Links")}</div>`;
     return;
@@ -477,8 +486,8 @@ function drawCaption() {
   trash.innerHTML = ICON.trash;
   cap.innerHTML = `
     ${s ? `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener"><b>${esc(s.title)}</b>${s.summary ? `<p>${esc(s.summary)}</p>` : ""}<small>${esc(host(s.url))} ↗</small></a>` : `<div class="src"><b>Your photo</b><small>${esc(new Date(item.created_at).toLocaleDateString())}</small></div>`}
-    <label class="roompill">${ICON.sofa}${ROOMS[item.room] || (state.pending.has(item.id) ? "Sorting…" : "Room")}
-      <select>${ROOMS[item.room] ? "" : `<option value="" disabled selected>Room</option>`}${Object.entries(ROOMS).map(([k, v]) => `<option value="${k}"${item.room === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>`;
+    ${isArt(item) ? "" : `<label class="roompill">${ICON.sofa}${ROOMS[item.room] || (state.pending.has(item.id) ? "Sorting…" : "Room")}
+      <select>${ROOMS[item.room] ? "" : `<option value="" disabled selected>Room</option>`}${Object.entries(ROOMS).map(([k, v]) => `<option value="${k}"${item.room === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>`}`;
 }
 async function onViewerClick(e) {
   const btn = e.target.closest("[data-v]");
@@ -628,8 +637,12 @@ function hideSheet() {
 }
 const closeSheet = () => sheetOpen && popLayer();
 
+// On the Art tab, + adds artwork: links go through addArt and uploaded photos are filed as art
+let uploadRoom = null;
 function openAdd() {
+  const art = state.view === "art";
   openSheet(`
+    ${art ? `<h3 class="sheet-title">Add artwork</h3>` : ""}
     <div class="choices">
       <button data-s="paste">${ICON.paste}Paste link</button>
       <button data-s="photos">${ICON.image}Photos</button>
@@ -640,19 +653,19 @@ function openAdd() {
     </form>`, (el) => {
     el.onclick = async (e) => {
       const s = e.target.closest("[data-s]")?.dataset.s;
-      if (s === "photos") { $("#files").click(); closeSheet(); }
+      if (s === "photos") { uploadRoom = art ? ART : null; $("#files").click(); closeSheet(); }
       if (s === "paste") {
         const url = firstUrl(await navigator.clipboard?.readText().catch(() => ""));
         if (!url) { toast("No link on your clipboard"); return $("input", el).focus(); }
         closeSheet();
-        addLink(url);
+        art ? addArt(url) : addLink(url);
       }
     };
     $("form", el).onsubmit = (e) => {
       e.preventDefault();
       const url = e.target.url.value;
       closeSheet();
-      addLink(url);
+      art ? addArt(url) : addLink(url);
     };
   });
 }
@@ -680,11 +693,29 @@ async function addLink(raw) {
   saveLink(page, existing, urls, ROOMS[page.room] && page.room !== "other" ? page.room : null);
 }
 
+// Artwork: every photo on the page comes back; the first (the piece itself) is ticked, tap any others (back, detail, on a wall)
+async function addArt(raw) {
+  const url = cleanUrl(raw);
+  toast("Reading link…", true);
+  let page;
+  try {
+    page = await store.analyze(raw.trim(), { art: true }); // the raw link: an eBay one carries the photo id in its tracking params
+  } catch (e) {
+    return toast(`Couldn't read that link: ${e.message}`);
+  }
+  $("#toast").hidden = true;
+  if (!page.images.length) return toast(/ebay\./.test(url) ? "eBay wouldn't share the photos. Save one and add it with Photos." : "No pictures found on that page");
+  page.kind = ART;
+  const existing = state.sources.find((s) => sameUrl(s.url, url) || sameUrl(s.url, page.url));
+  if (page.images.length === 1 && !existing) return saveLink(page, null, page.images, ART);
+  pickPhotos(page, existing, ART, page.picked?.length ? page.picked.slice(0, 1) : page.images.slice(0, 1));
+}
+
 // A listing can have dozens of photos: tap the ones worth keeping
-function pickPhotos(page, existing) {
+function pickPhotos(page, existing, room = null, preselect = []) {
   const had = new Set(existing ? state.items.filter((i) => i.source_id === existing.id).map((i) => i.origin_url) : []);
   const fresh = page.images.filter((u) => !had.has(u));
-  const picked = new Set();
+  const picked = new Set(preselect.filter((u) => !had.has(u)));
   openSheet(`
     <h3>${esc(existing?.title || page.title)}</h3>
     <p class="sub"><span>Tap the photos you like</span><button data-s="all">Select all</button></p>
@@ -702,9 +733,10 @@ function pickPhotos(page, existing) {
       const s = e.target.closest("[data-s]")?.dataset.s;
       if (u) picked.has(u) ? picked.delete(u) : picked.add(u);
       if (s === "all") { if (picked.size === fresh.length) picked.clear(); else fresh.forEach((x) => picked.add(x)); }
-      if (s === "add") { closeSheet(); return saveLink(page, existing, [...picked], null); }
+      if (s === "add") { closeSheet(); return saveLink(page, existing, [...picked], room); }
       sync();
     };
+    sync();
   });
 }
 
@@ -712,7 +744,7 @@ async function saveLink(page, existing, urls, room) {
   let source = existing;
   try {
     if (!source) {
-      source = await store.addSource({ url: cleanUrl(page.url), title: page.title, summary: page.summary || "", kind: page.kind === "listing" ? "listing" : "other" });
+      source = await store.addSource({ url: cleanUrl(page.url), title: page.title, summary: page.summary || "", kind: ["listing", ART].includes(page.kind) ? page.kind : "other" });
       state.sources.unshift(source);
     }
   } catch (e) {
@@ -791,7 +823,7 @@ const importImages = (urls, sourceId, roomOf = () => null) => addAll(urls, 3, as
     return store.addRemotePhoto({ ...row, remote_url: url, w: img.naturalWidth, h: img.naturalHeight });
   }
 });
-const uploadFiles = (files) => addAll(files, 2, async (file) => store.addPhoto({ ...(await processImage(file)), source_id: null, origin_url: null, room: null }));
+const uploadFiles = (files, room = null) => addAll(files, 2, async (file) => store.addPhoto({ ...(await processImage(file)), source_id: null, origin_url: null, room }));
 
 /* ---------------- AI room sorting ---------------- */
 
@@ -915,13 +947,14 @@ function bindEvents() {
   $("#files").onchange = (e) => {
     const files = [...e.target.files];
     e.target.value = "";
-    uploadFiles(files);
+    uploadFiles(files, uploadRoom);
+    uploadRoom = null;
   };
   // Desktop: paste a link anywhere to add it
   document.addEventListener("paste", (e) => {
     if (e.target.closest?.("input")) return;
     const url = firstUrl(e.clipboardData?.getData("text"));
-    if (url) { e.preventDefault(); closeSheet(); addLink(url); }
+    if (url) { e.preventDefault(); closeSheet(); state.view === "art" ? addArt(url) : addLink(url); }
   });
   document.addEventListener("keydown", (e) => {
     if (e.target.closest?.("input, select, textarea")) return;

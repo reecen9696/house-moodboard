@@ -141,6 +141,7 @@ section.group { position: relative; }
   .sheet { left: 50%; right: auto; width: 520px; margin-left: -260px; bottom: 24px; border-radius: 26px; animation: fade .2s; }
 }
 .sheet h3 { margin: 0 4px 2px; font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
+.sheet .sheet-title { margin-bottom: 14px; }
 .sheet .sub { margin: 0 4px 14px; color: var(--muted); font-size: 14px; display: flex; justify-content: space-between; gap: 12px; }
 .sheet .sub button { color: var(--text); font-weight: 600; white-space: nowrap; }
 .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
