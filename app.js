@@ -485,9 +485,10 @@ function drawCaption() {
   trash.classList.remove("armed");
   trash.innerHTML = ICON.trash;
   cap.innerHTML = `
-    ${s ? `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener"><b>${esc(s.title)}</b>${s.width_cm ? `<small class="size">${esc(`${+s.width_cm} × ${+s.height_cm} cm (W × H)`)}</small>` : ""}${s.summary ? `<p>${esc(s.summary)}</p>` : ""}<small>${esc(host(s.url))} ↗</small></a>` : `<div class="src"><b>Your photo</b><small>${esc(new Date(item.created_at).toLocaleDateString())}</small></div>`}
+    ${s ? `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener"><b>${esc(s.title)}</b>${s.width_cm ? `<small class="size"><span class="scat">${sizeClass(s)}</span>${esc(`${+s.width_cm} × ${+s.height_cm} cm (W × H)`)}</small>` : ""}${s.summary ? `<p>${esc(s.summary)}</p>` : ""}<small>${esc(host(s.url))} ↗</small></a>` : `<div class="src"><b>Your photo</b><small>${esc(new Date(item.created_at).toLocaleDateString())}</small></div>`}
     ${isArt(item) ? "" : `<label class="roompill">${ICON.sofa}${ROOMS[item.room] || (state.pending.has(item.id) ? "Sorting…" : "Room")}
       <select>${ROOMS[item.room] ? "" : `<option value="" disabled selected>Room</option>`}${Object.entries(ROOMS).map(([k, v]) => `<option value="${k}"${item.room === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>`}`;
+  $("#viewer").style.setProperty("--caph", `${cap.offsetHeight}px`); // desktop keeps the photo above the panel (styles.css)
 }
 async function onViewerClick(e) {
   const btn = e.target.closest("[data-v]");
@@ -762,6 +763,12 @@ async function saveLink(page, existing, urls, room) {
 
 // A painting's size (from the backend's size.ts: as the seller wrote it, sides in cm). Saved as width × height the way
 // it hangs: the longer side follows the photo's longer side (a near-square photo keeps the seller's order).
+// Small / Medium / Large / Extra large by the longest side, the usual way galleries band canvases
+function sizeClass(s) {
+  const long = Math.max(+s.width_cm, +s.height_cm);
+  return long < 40 ? "Small" : long < 75 ? "Medium" : long < 120 ? "Large" : "Extra large";
+}
+
 async function saveSize(source, { size, a_cm, b_cm }) {
   const photo = state.items.find((i) => i.source_id === source.id && i.w && i.h);
   const [lo, hi] = [Math.min(a_cm, b_cm), Math.max(a_cm, b_cm)];
