@@ -485,7 +485,7 @@ function drawCaption() {
   trash.classList.remove("armed");
   trash.innerHTML = ICON.trash;
   cap.innerHTML = `
-    ${s ? `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener"><b>${esc(s.title)}</b>${s.summary ? `<p>${esc(s.summary)}</p>` : ""}<small>${esc(host(s.url))} ↗</small></a>` : `<div class="src"><b>Your photo</b><small>${esc(new Date(item.created_at).toLocaleDateString())}</small></div>`}
+    ${s ? `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener"><b>${esc(s.title)}</b>${s.width_cm ? `<small class="size">${esc(`${+s.width_cm} × ${+s.height_cm} cm (W × H)`)}</small>` : ""}${s.summary ? `<p>${esc(s.summary)}</p>` : ""}<small>${esc(host(s.url))} ↗</small></a>` : `<div class="src"><b>Your photo</b><small>${esc(new Date(item.created_at).toLocaleDateString())}</small></div>`}
     ${isArt(item) ? "" : `<label class="roompill">${ICON.sofa}${ROOMS[item.room] || (state.pending.has(item.id) ? "Sorting…" : "Room")}
       <select>${ROOMS[item.room] ? "" : `<option value="" disabled selected>Room</option>`}${Object.entries(ROOMS).map(([k, v]) => `<option value="${k}"${item.room === k ? " selected" : ""}>${v}</option>`).join("")}</select></label>`}`;
 }
@@ -756,7 +756,21 @@ async function saveLink(page, existing, urls, room) {
   $("#main").scrollTo({ top: 0, behavior: "smooth" });
   await importImages(urls.filter((u) => !had.has(u)), source.id, () => room);
   state.busy.delete(source.id);
+  if (page.size && source.width_cm == null) await saveSize(source, page.size);
   render();
+}
+
+// A painting's size (from the backend's size.ts: as the seller wrote it, sides in cm). Saved as width × height the way
+// it hangs: the longer side follows the photo's longer side (a near-square photo keeps the seller's order).
+async function saveSize(source, { size, a_cm, b_cm }) {
+  const photo = state.items.find((i) => i.source_id === source.id && i.w && i.h);
+  const [lo, hi] = [Math.min(a_cm, b_cm), Math.max(a_cm, b_cm)];
+  const r = photo ? photo.w / photo.h : 1;
+  const [width_cm, height_cm] = Math.abs(r - 1) < 0.08 ? [a_cm, b_cm] : r > 1 ? [hi, lo] : [lo, hi];
+  try {
+    const saved = await store.updateSource(source.id, { size, width_cm, height_cm });
+    state.sources = state.sources.map((s) => (s.id === source.id ? saved : s));
+  } catch (e) { console.warn("couldn't save size", e); }
 }
 
 /* ---------------- photos in ---------------- */

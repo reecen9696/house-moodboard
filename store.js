@@ -82,6 +82,7 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
 
     async addSource(row) { return check(await sb.from("sources").insert(row).select().single()); },
     async deleteSource(id) { check(await sb.from("sources").delete().eq("id", id)); },
+    async updateSource(id, patch) { return check(await sb.from("sources").update(patch).eq("id", id).select().single()); },
     async addPhoto({ full, thumb, ...row }) {
       const id = uuid();
       // the full copy is the original file, so it keeps its own format (and extension)
@@ -185,6 +186,10 @@ async function localStore() {
     },
     async addSource(row) { return put("sources", { id: uuid(), created_at: now(), ...row }); },
     async deleteSource(id) { await del("sources", id); },
+    async updateSource(id, patch) {
+      const source = (await all("sources")).find((x) => x.id === id);
+      return put("sources", { ...source, ...patch });
+    },
     async addPhoto({ full, thumb, ...row }) {
       const id = uuid();
       const full_path = id, thumb_path = `${id}_t`;
