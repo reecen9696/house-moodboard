@@ -30,6 +30,8 @@ const ICON = {
   image: svg("M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"),
   more: svg("M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"),
   go: svg("M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"),
+  chat: svg("M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"),
+  send: svg("M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"),
 };
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -68,6 +70,7 @@ function addressFromUrl(u) {
 const state = {
   items: [],
   sources: [], // pasted links: listings, articles, products
+  comments: [], // notes on photos, oldest first
   view: ["home", "rooms", "links"].includes(ls.get("view")) ? ls.get("view") : "home",
   zoom: clamp(ls.get("zoom", 1), 0, ROW_HEIGHT.length - 1),
   selected: null, // Set of item ids while selecting
@@ -77,6 +80,7 @@ const state = {
 };
 let store;
 const sourceOf = (item) => state.sources.find((s) => s.id === item.source_id);
+const commentsOf = (item) => state.comments.filter((c) => c.item_id === item?.id);
 const loaded = new Set(); // image srcs already shown, so re-renders don't flash
 window.__l = (img) => { img.classList.add("loaded"); loaded.add(img.getAttribute("src")); };
 
@@ -183,8 +187,9 @@ function tileHtml(item, ratio, row) {
   const w = ratio * row.h;
   const src = store.src(item, w > 300 ? "full" : "thumb");
   const cls = `tile${state.pending.has(item.id) ? " pending" : ""}${state.selected?.has(item.id) ? " sel" : ""}`;
+  const n = commentsOf(item).length;
   return `<button class="${cls}" data-id="${item.id}" style="${row.loose ? `flex:none;width:${w.toFixed(1)}px` : `flex:${ratio.toFixed(4)} 1 0`}">
-    <img src="${esc(src)}" alt="" decoding="async" loading="lazy" ${loaded.has(src) ? 'class="loaded"' : 'onload="__l(this)"'} onerror="this.classList.add('loaded')"></button>`;
+    <img src="${esc(src)}" alt="" decoding="async" loading="lazy" ${loaded.has(src) ? 'class="loaded"' : 'onload="__l(this)"'} onerror="this.classList.add('loaded')">${n ? `<span class="cbadge">${ICON.chat}${n}</span>` : ""}</button>`;
 }
 
 let renderQueued = false;
@@ -306,6 +311,7 @@ async function deleteItems(items) {
     await store.deleteItems(items);
     const gone = new Set(items.map((i) => i.id));
     state.items = state.items.filter((i) => !gone.has(i.id));
+    state.comments = state.comments.filter((c) => !gone.has(c.item_id)); // the backend drops them with the photo
     // A link whose photos are all deleted goes too
     for (const id of new Set(items.map((i) => i.source_id).filter(Boolean))) {
       if (!state.items.some((i) => i.source_id === id)) await removeSource(id);
@@ -366,27 +372,36 @@ function drawViewer() {
       <button class="vbtn" data-v="close" aria-label="Close">${ICON.close}</button>
       <span class="spacer"></span>
       <button class="vbtn trash" data-v="delete" aria-label="Delete">${ICON.trash}</button>
+      <button class="vbtn chat" data-v="comments" aria-label="Comments">${ICON.chat}<span class="n"></span></button>
       <button class="vbtn" data-v="info" aria-label="Details">${ICON.more}</button>
     </div>
-    <div class="cap"></div>`;
+    <div class="cap"></div>
+    <section class="cpanel" aria-label="Comments">
+      <div class="chead"><b>Comments</b><button class="vbtn" data-v="cclose" aria-label="Close comments">${ICON.close}</button></div>
+      <ul class="clist"></ul>
+      <form class="cform"><textarea name="body" rows="1" placeholder="Add a comment…" enterkeyhint="send"></textarea><button aria-label="Post comment">${ICON.send}</button></form>
+    </section>`;
   el.hidden = false;
   document.body.style.overflow = "hidden";
   syncChrome();
   const strip = $(".strip", el);
   strip.scrollLeft = viewer.index * strip.clientWidth;
   drawCaption();
+  setupComments(el);
   let t;
   strip.addEventListener("scroll", () => {
     clearTimeout(t);
+    if (viewer.relayout) return; // a rotation moves the scroll position; that isn't a swipe to another photo
     t = setTimeout(() => {
       const i = Math.round(strip.scrollLeft / strip.clientWidth);
-      if (i !== viewer.index) { resetZoom(); viewer.index = i; drawCaption(); }
+      if (i !== viewer.index) { resetZoom(); viewer.index = i; drawCaption(); drawComments(); }
     }, 60);
   });
   setupPhotoGestures(strip);
 }
 function hideViewer() {
   viewer.open = false;
+  viewer.comments = false;
   $("#viewer").hidden = true;
   $("#viewer").innerHTML = "";
   document.body.style.overflow = "";
@@ -394,8 +409,64 @@ function hideViewer() {
 // Tap the photo to hide/show the buttons; ⋮ shows the details panel
 function syncChrome() {
   const el = $("#viewer");
-  el.classList.toggle("bare", viewer.bare);
-  el.classList.toggle("info", viewer.info && !viewer.bare);
+  el.classList.toggle("bare", viewer.bare && !viewer.comments);
+  el.classList.toggle("info", viewer.info && !viewer.bare && !viewer.comments);
+  el.classList.toggle("talking", !!viewer.comments);
+}
+
+/* Comments on a photo: the chat button (right of the bin) or a swipe up on the photo slides the panel up, with the
+   history and a box to add one. Saved with the photo in the backend; the panel follows you as you swipe photos. */
+function drawComments() {
+  const el = $("#viewer");
+  if (!el || el.hidden) return;
+  const item = currentItem(), list = commentsOf(item);
+  const n = $(".chat .n", el);
+  if (n) n.textContent = list.length || "";
+  const ul = $(".clist", el);
+  if (!ul) return;
+  const when = (d) => new Date(d).toLocaleString(undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+  ul.innerHTML = list.length
+    ? list.map((c) => `<li><p>${esc(c.body)}</p><small>${esc(when(c.created_at))}</small><button data-v="cdel" data-id="${esc(c.id)}" aria-label="Delete comment">${ICON.close}</button></li>`).join("")
+    : `<li class="none">No comments yet</li>`;
+  ul.scrollTop = ul.scrollHeight;
+}
+function openComments(focus = false) {
+  if (!viewer.comments) { viewer.comments = true; pushLayer(hideComments); }
+  resetZoom(true);
+  syncChrome();
+  drawComments();
+  if (focus) setTimeout(() => $("#viewer .cform textarea")?.focus(), 260);
+}
+function hideComments() {
+  viewer.comments = false;
+  $("#viewer .cform textarea")?.blur();
+  syncChrome();
+}
+function setupComments(el) {
+  const form = $(".cform", el), box = form.body;
+  const grow = () => { box.style.height = "auto"; box.style.height = Math.min(box.scrollHeight, 120) + "px"; };
+  box.addEventListener("input", grow);
+  box.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); form.requestSubmit(); } });
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const body = box.value.trim(), item = currentItem();
+    if (!body || !item) return;
+    box.value = ""; grow();
+    try {
+      state.comments.push(await store.addComment(item.id, body));
+      haptic("success");
+    } catch (err) { box.value = body; toast(`Couldn't save: ${err.message}`); }
+    drawComments(); render();
+  };
+  drawComments();
+}
+async function deleteComment(btn) {
+  if (!btn.classList.contains("armed")) { btn.classList.add("armed"); btn.textContent = "Delete"; return; }
+  try {
+    await store.deleteComment(btn.dataset.id);
+    state.comments = state.comments.filter((c) => c.id !== btn.dataset.id);
+  } catch (err) { toast(`Couldn't delete: ${err.message}`); }
+  drawComments(); render();
 }
 function drawCaption() {
   const item = currentItem(), cap = $("#viewer .cap");
@@ -414,6 +485,9 @@ async function onViewerClick(e) {
   if (!btn) return;
   if (btn.dataset.v === "close") return popLayer();
   if (btn.dataset.v === "info") { viewer.info = !viewer.info; return syncChrome(); }
+  if (btn.dataset.v === "comments") return viewer.comments ? popLayer() : openComments(true);
+  if (btn.dataset.v === "cclose") return popLayer();
+  if (btn.dataset.v === "cdel") return deleteComment(btn);
   if (btn.dataset.v !== "delete") return;
   if (!btn.classList.contains("armed")) { btn.classList.add("armed"); btn.textContent = "Delete?"; return; }
   const item = currentItem();
@@ -495,7 +569,12 @@ function setupPhotoGestures(strip) {
       if (pz.s < 1.05) resetZoom(true); else { clampPan(); applyZoom(true); }
       return;
     }
-    if (moved) return;
+    if (moved) {
+      // a swipe up (not a sideways swipe to the next photo) opens the comments
+      const t = e.changedTouches[0], dy = was.y - t.clientY, dx = Math.abs(t.clientX - was.x);
+      if (was.kind === "tap" && dy > 60 && dx < dy * 0.6) openComments(true);
+      return;
+    }
     const now = Date.now();
     if (now - lastTap < 280) { // double tap
       clearTimeout(tapTimer);
@@ -667,12 +746,14 @@ function toJpeg(img, max, quality) {
   c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
   return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("Couldn't encode image"))), "image/jpeg", quality));
 }
-// A ~2000px copy and a ~640px thumbnail
+// The full copy is the original file, untouched: no resizing, no re-compression. Only a format a browser can't show
+// everywhere (HEIC from an iPhone) is converted, to a full-size 95% JPEG. Plus an 800px thumbnail for the wall.
+const KEEP = ["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"];
 async function processImage(blob) {
   const url = URL.createObjectURL(blob);
   try {
     const img = await loadImage(url);
-    const [full, thumb] = await Promise.all([toJpeg(img, 2000, 0.85), toJpeg(img, 640, 0.8)]);
+    const [full, thumb] = await Promise.all([KEEP.includes(blob.type) ? blob : toJpeg(img, 12000, 0.95), toJpeg(img, 800, 0.85)]);
     return { full, thumb, w: img.naturalWidth, h: img.naturalHeight };
   } finally {
     URL.revokeObjectURL(url);
@@ -843,7 +924,7 @@ function bindEvents() {
     if (url) { e.preventDefault(); closeSheet(); addLink(url); }
   });
   document.addEventListener("keydown", (e) => {
-    if (e.target.closest?.("input, select")) return;
+    if (e.target.closest?.("input, select, textarea")) return;
     if (viewer.open) {
       const strip = $("#viewer .strip");
       if (e.key === "ArrowRight") strip.scrollBy({ left: strip.clientWidth, behavior: "smooth" });
@@ -856,8 +937,26 @@ function bindEvents() {
     if (e.key === "+" || e.key === "=") setZoom(state.zoom - 1);
     if (e.key === "-") setZoom(state.zoom + 1);
   });
-  let w = innerWidth;
-  window.addEventListener("resize", () => { if (innerWidth !== w) { w = innerWidth; render(); } });
+  // Rotating a phone: re-flow the wall for the new width, and keep the viewer on the same photo (its scroll position
+  // was measured in the old width, which left it between two photos). iOS reports the new size a beat after the
+  // event, so this runs once on the next frames and once more after the rotation settles.
+  let w = innerWidth, settle;
+  const relayout = () => {
+    if (innerWidth === w) return;
+    w = innerWidth;
+    renderNow();
+    const strip = viewer.open && $("#viewer .strip");
+    if (strip) {
+      viewer.relayout = true;
+      resetZoom();
+      strip.scrollLeft = viewer.index * strip.clientWidth;
+      requestAnimationFrame(() => { strip.scrollLeft = viewer.index * strip.clientWidth; viewer.relayout = false; });
+    }
+  };
+  const onResize = () => { requestAnimationFrame(() => requestAnimationFrame(relayout)); clearTimeout(settle); settle = setTimeout(relayout, 350); };
+  window.addEventListener("resize", onResize);
+  window.addEventListener("orientationchange", onResize);
+  visualViewport?.addEventListener("resize", onResize);
   setupZoom();
   setupLongPress();
 }

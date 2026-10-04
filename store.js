@@ -18,6 +18,9 @@ async function preview(url) {
   return { url: d.url || url, title: title || new URL(url).hostname, summary: d.description || "", kind: "idea", room: "other", images, picked: images };
 }
 
+// file extension for each image type a browser shows natively (originals are stored as they are)
+const EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/avif": "avif", "image/gif": "gif" };
+
 export async function createStore(config) {
   return config.supabaseUrl && config.supabaseAnonKey ? cloudStore(config) : localStore();
 }
@@ -65,11 +68,12 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
     },
 
     async load() {
-      const [items, sources] = await Promise.all([
+      const [items, sources, comments] = await Promise.all([
         sb.from("items").select("*").order("created_at", { ascending: false }).then(check),
         sb.from("sources").select("*").order("created_at", { ascending: false }).then(check),
+        sb.from("comments").select("*").order("created_at", { ascending: true }).then(check),
       ]);
-      return { items, sources };
+      return { items, sources, comments };
     },
     src(item, size = "thumb") {
       const path = size === "thumb" ? item.thumb_path || item.full_path : item.full_path || item.thumb_path;
@@ -80,15 +84,18 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
     async deleteSource(id) { check(await sb.from("sources").delete().eq("id", id)); },
     async addPhoto({ full, thumb, ...row }) {
       const id = uuid();
-      const full_path = `${user.id}/${id}.jpg`, thumb_path = `${user.id}/${id}_t.jpg`;
-      const opts = { contentType: "image/jpeg", cacheControl: "31536000", upsert: false };
+      // the full copy is the original file, so it keeps its own format (and extension)
+      const full_path = `${user.id}/${id}.${EXT[full.type] || "jpg"}`, thumb_path = `${user.id}/${id}_t.jpg`;
+      const opts = (type) => ({ contentType: type, cacheControl: "31536000", upsert: false });
       await Promise.all([
-        sb.storage.from("photos").upload(full_path, full, opts).then(check),
-        sb.storage.from("photos").upload(thumb_path, thumb, opts).then(check),
+        sb.storage.from("photos").upload(full_path, full, opts(full.type || "image/jpeg")).then(check),
+        sb.storage.from("photos").upload(thumb_path, thumb, opts("image/jpeg")).then(check),
       ]);
       return check(await sb.from("items").insert({ id, full_path, thumb_path, ...row }).select().single());
     },
     async addRemotePhoto(row) { return check(await sb.from("items").insert(row).select().single()); },
+    async addComment(item_id, body) { return check(await sb.from("comments").insert({ item_id, body }).select().single()); },
+    async deleteComment(id) { check(await sb.from("comments").delete().eq("id", id)); },
     async updateItem(id, patch) { return check(await sb.from("items").update(patch).eq("id", id).select().single()); },
     async deleteItems(items) {
       const paths = items.flatMap((i) => [i.full_path, i.thumb_path]).filter(Boolean);
@@ -127,10 +134,10 @@ async function cloudStore({ supabaseUrl, supabaseAnonKey }) {
 
 function idb() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open("moodboard", 2);
+    const req = indexedDB.open("moodboard", 3);
     req.onupgradeneeded = (e) => {
       const db = req.result, tx = req.transaction;
-      for (const name of ["items", "sources", "blobs"]) {
+      for (const name of ["items", "sources", "blobs", "comments"]) {
         if (!db.objectStoreNames.contains(name)) db.createObjectStore(name, { keyPath: "id" });
       }
       if (e.oldVersion === 1) { // v1 called sources "properties"
@@ -170,7 +177,7 @@ async function localStore() {
     mode: "local",
     user: { id: "local" },
     async load() {
-      return { items: (await all("items")).sort(byDate), sources: (await all("sources")).sort(byDate) };
+      return { items: (await all("items")).sort(byDate), sources: (await all("sources")).sort(byDate), comments: (await all("comments")).sort((a, b) => -byDate(a, b)) };
     },
     src(item, size = "thumb") {
       const key = size === "thumb" ? item.thumb_path || item.full_path : item.full_path || item.thumb_path;
@@ -188,6 +195,8 @@ async function localStore() {
       return put("items", { id, created_at: now(), full_path, thumb_path, ...row });
     },
     async addRemotePhoto(row) { return put("items", { id: uuid(), created_at: now(), ...row }); },
+    async addComment(item_id, body) { return put("comments", { id: uuid(), created_at: now(), item_id, body }); },
+    async deleteComment(id) { await del("comments", id); },
     async updateItem(id, patch) {
       const item = (await all("items")).find((x) => x.id === id);
       return put("items", { ...item, ...patch });
@@ -200,6 +209,7 @@ async function localStore() {
           urls.delete(k);
         }
         await del("items", item.id);
+        for (const c of (await all("comments")).filter((c) => c.item_id === item.id)) await del("comments", c.id);
       }
     },
     analyze: preview,

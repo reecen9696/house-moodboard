@@ -187,6 +187,50 @@ section.group { position: relative; }
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 }
 .vbtn.armed { background: var(--danger); padding: 0 16px; }
+.vbtn.chat { position: relative; }
+.vbtn.chat .n:not(:empty) {
+  position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box;
+  border-radius: 999px; background: var(--blue); color: #fff; font-size: 11px; font-weight: 700; line-height: 18px; text-align: center;
+}
+
+/* comments: a panel that slides up over the bottom of the photo */
+.cpanel {
+  position: absolute; z-index: 3; left: 0; right: 0; bottom: 0; max-height: min(62vh, 560px); display: flex; flex-direction: column;
+  margin: 0 auto; max-width: 640px; border-radius: 24px 24px 0 0; padding: 6px 0 calc(10px + var(--sab));
+  background: rgba(24,24,26,.92); backdrop-filter: blur(28px) saturate(1.4); -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  transform: translateY(105%); transition: transform .3s cubic-bezier(.2,.9,.3,1); pointer-events: none;
+}
+.viewer.talking .cpanel { transform: none; pointer-events: auto; }
+.viewer.talking .cap { opacity: 0; pointer-events: none; }
+.chead { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px 6px 20px; }
+.chead b { font-size: 17px; font-weight: 700; }
+.chead .vbtn { min-width: 36px; height: 36px; background: rgba(255,255,255,.12); }
+.chead .vbtn svg { width: 20px; height: 20px; }
+.clist { list-style: none; margin: 0; padding: 4px 20px; overflow-y: auto; overscroll-behavior: contain; flex: 1; min-height: 60px; }
+.clist li { position: relative; padding: 10px 44px 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+.clist li:last-child { border-bottom: 0; }
+.clist li.none { padding-right: 0; color: rgba(255,255,255,.5); font-size: 14.5px; }
+.clist p { margin: 0; font-size: 15.5px; line-height: 1.4; white-space: pre-wrap; overflow-wrap: anywhere; }
+.clist small { display: block; margin-top: 3px; font-size: 12px; opacity: .5; }
+.clist button { position: absolute; right: 0; top: 50%; transform: translateY(-50%); min-width: 32px; height: 32px; padding: 0 6px; border-radius: 999px; display: grid; place-items: center; color: rgba(255,255,255,.45); font-size: 13px; font-weight: 600; }
+.clist button svg { width: 18px; height: 18px; }
+.clist button.armed { background: var(--danger); color: #fff; padding: 0 12px; }
+.cform { display: flex; align-items: flex-end; gap: 8px; padding: 8px 12px 0; }
+.cform textarea {
+  flex: 1; min-height: 44px; max-height: 120px; resize: none; box-sizing: border-box; padding: 11px 16px; border: 0; border-radius: 22px;
+  background: rgba(255,255,255,.12); color: #fff; font: inherit; font-size: 16px; line-height: 22px; outline: none;
+}
+.cform textarea::placeholder { color: rgba(255,255,255,.45); }
+.cform button { flex: none; width: 44px; height: 44px; border-radius: 999px; display: grid; place-items: center; background: var(--blue); color: #fff; }
+.cform button svg { width: 20px; height: 20px; }
+
+/* wall: photos with comments carry a small count */
+.cbadge {
+  position: absolute; z-index: 1; right: 6px; bottom: 6px; height: 22px; padding: 0 7px 0 5px; border-radius: 999px;
+  display: flex; align-items: center; gap: 3px; background: rgba(0,0,0,.55); color: #fff; font-size: 12px; font-weight: 700;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); pointer-events: none;
+}
+.cbadge svg { width: 13px; height: 13px; }
 .cap {
   position: absolute; left: 0; right: 0; bottom: 0; margin: 0 10px calc(10px + var(--sab)); padding: 16px;
   display: flex; align-items: flex-end; gap: 14px; border-radius: 22px;
