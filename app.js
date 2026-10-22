@@ -235,15 +235,13 @@ async function loadSourcing() {
   if (state.view === "sourcing") render();
 }
 function sourcingHtml() {
-  if (!sourcing) { loadSourcing(); return `<h1 class="title">Sourcing</h1>`; }
-  const items = sourcing.items || [];
+  if (!sourcing) { loadSourcing(); return ""; }
+  const items = (sourcing.items || []).filter((l) => l.image); // photos only; quotes without one stay in sourcing.json
   if (!items.length) return `<div class="empty"><b>No fittings yet</b>Items added to sourcing.json show up here.</div>`;
   const card = (l) => `<button class="src" data-act="sourcing" data-id="${esc(l.id)}" aria-label="${esc(l.name)}">
-    ${l.image ? `<img src="${esc(l.image)}" alt="" loading="lazy">` : `<span class="noimg">${esc(l.name)}</span>`}
+    <img src="${esc(l.image)}" alt="" loading="lazy">
     ${l.price ? `<span class="pill">${esc(l.price)}</span>` : ""}</button>`;
-  const groups = Object.entries(sourcing.groups || {}).map(([k, name]) => [name, items.filter((l) => l.group === k)]).filter(([, g]) => g.length);
-  return `<h1 class="title">Sourcing</h1><p class="lights-sub">${esc(sourcing.note || "")}</p>`
-    + groups.map(([name, g]) => `<h2 class="links-head">${esc(name)}</h2><div class="srcs">${g.map(card).join("")}</div>`).join("");
+  return `<div class="srcs">${items.map(card).join("")}</div>`;
 }
 function openSourcing(id) {
   const l = sourcing?.items.find((x) => x.id === id);
