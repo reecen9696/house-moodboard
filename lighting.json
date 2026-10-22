@@ -1,0 +1,827 @@
+{
+  "title": "House lighting shortlist",
+  "updated": "2026-10-21",
+  "units": "mm",
+  "currency": "AUD",
+  "for_3d_model": "Each item has a photo (image_url) and sizes in mm under size.variants. diameter_mm is the shade diameter; height_mm is the fixture body height, not including the cable drop (cable_mm is the maximum drop). For wall lights wall_projection_mm is how far it sticks out from the wall. Placement in the house is not decided yet. Sizes marked confidence low or unknown need checking with the supplier.",
+  "items": [
+    {
+      "id": "1601871296307",
+      "kind": "pendant",
+      "name": "Spanish alabaster disc pendant",
+      "url": "https://www.alibaba.com/product-detail/Modern-Minimalist-Natural-Spanish-Alabaster-Round_1601871296307.html",
+      "image": "lighting/1601871296307.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601871296307.jpg",
+      "price_aud": "$29.85–182.08",
+      "price_note": "MOQ 1 piece; range covers sizes",
+      "supplier": "Shenzhen Together Supply Chain, 2 yrs, 4.2 ★ (7)",
+      "size": {
+        "variants": [
+          {
+            "label": "D300",
+            "diameter_mm": 300,
+            "height_mm": 60
+          },
+          {
+            "label": "D400",
+            "diameter_mm": 400,
+            "height_mm": 70
+          },
+          {
+            "label": "D500",
+            "diameter_mm": 500,
+            "height_mm": 80
+          },
+          {
+            "label": "D600",
+            "diameter_mm": 600,
+            "height_mm": 90
+          },
+          {
+            "label": "D650",
+            "diameter_mm": 650,
+            "height_mm": 90
+          },
+          {
+            "label": "D800",
+            "diameter_mm": 800,
+            "height_mm": 100
+          }
+        ],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": "listing SKU 'D30/40/50/60/80/65cm'; heights estimated from photo",
+        "confidence": "low",
+        "note": "Diameters from the listing; disc thickness (height) estimated from the photo. Hangs on a rigid rod, length not stated."
+      },
+      "specs": {
+        "shade": "Natural alabaster disc, marble body",
+        "bulb": "E14 LED, 30–100 W, dimmable",
+        "colour": "2700K to 6000K options",
+        "weight": "5 kg",
+        "warranty": "5 years",
+        "supplier": "Shenzhen Together Supply Chain, 2 yrs, 4.2 ★ (7)"
+      },
+      "warning": "Newer supplier with only 7 reviews",
+      "shape": "flat disc on a rod",
+      "finish": "natural alabaster disc, white/marble body, black rod"
+    },
+    {
+      "id": "1601527550757",
+      "kind": "pendant",
+      "name": "ZeroUNO alabaster pendant, 20+ shapes",
+      "url": "https://www.alibaba.com/product-detail/ZeroUNO-Alabaster-strong-Pendant-strong-strong_1601527550757.html",
+      "image": "lighting/1601527550757.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601527550757.jpg",
+      "price_aud": "$29.40–81.72",
+      "price_note": "MOQ 1 pack; styles A to R and more",
+      "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+      "size": {
+        "variants": [
+          {
+            "label": "A drum",
+            "diameter_mm": 210,
+            "height_mm": 170
+          },
+          {
+            "label": "B globe 120",
+            "diameter_mm": 120,
+            "height_mm": 120
+          },
+          {
+            "label": "C globe 150",
+            "diameter_mm": 150,
+            "height_mm": 150
+          },
+          {
+            "label": "D globe 180",
+            "diameter_mm": 180,
+            "height_mm": 180
+          },
+          {
+            "label": "E cylinder with ball",
+            "diameter_mm": 120,
+            "height_mm": 290
+          },
+          {
+            "label": "F capsule",
+            "diameter_mm": 100,
+            "height_mm": 260
+          },
+          {
+            "label": "G tulip",
+            "diameter_mm": 130,
+            "height_mm": 170
+          },
+          {
+            "label": "K ribbed cylinder",
+            "diameter_mm": 115,
+            "height_mm": 180
+          }
+        ],
+        "cable_mm": 2000,
+        "canopy_mm": 100,
+        "wall_projection_mm": null,
+        "source": "style swatch images",
+        "confidence": "high",
+        "note": "Styles H to J are flat alabaster discs 100/250/300 mm on a 1.5 m wire; L is a 140 x 190 ribbed cylinder. Cable 2 m adjustable on A to G."
+      },
+      "specs": {
+        "shade": "Natural alabaster, many shapes",
+        "body": "Gold",
+        "bulb": "E27, 10 W, 3500K",
+        "weight": "1.5 kg",
+        "warranty": "2 years",
+        "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+        "shipping": "Quote from supplier"
+      },
+      "warning": null,
+      "shape": "many shapes: drum, globe, capsule, tulip, disc",
+      "finish": "natural alabaster, brass canopy and fittings"
+    },
+    {
+      "id": "1601441330638",
+      "kind": "pendant",
+      "name": "ZeroUNO alabaster cylinder pendant",
+      "url": "https://www.alibaba.com/product-detail/ZeroUNO-Alabaster-strong-Pendant-strong-strong_1601441330638.html",
+      "image": "lighting/1601441330638.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601441330638.jpg",
+      "price_aud": "$57.23–75.93",
+      "price_note": "MOQ 1 pack",
+      "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+      "size": {
+        "variants": [
+          {
+            "label": "M 14 x 14 cm",
+            "diameter_mm": 140,
+            "height_mm": 140
+          },
+          {
+            "label": "L 16.5 x 16.5 cm",
+            "diameter_mm": 165,
+            "height_mm": 165
+          }
+        ],
+        "cable_mm": 2000,
+        "canopy_mm": 100,
+        "wall_projection_mm": null,
+        "source": "SKU names and size diagrams",
+        "confidence": "high",
+        "note": "Cable 200 cm adjustable."
+      },
+      "specs": {
+        "shade": "Natural alabaster, cylinder",
+        "sizes": "14 × 14 cm, 16.5 × 16.5 cm",
+        "body": "Black iron, adjustable drop",
+        "bulb": "E27, 10 W, 2700K",
+        "warranty": "2 years",
+        "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+        "shipping": "Quote from supplier"
+      },
+      "warning": null,
+      "shape": "cylinder",
+      "finish": "natural alabaster, black canopy and cord"
+    },
+    {
+      "id": "1601442560930",
+      "kind": "pendant",
+      "name": "ZeroUNO alabaster globe pendant",
+      "url": "https://www.alibaba.com/product-detail/ZeroUNO-Alabaster-strong-Pendant-strong-strong_1601442560930.html",
+      "image": "lighting/1601442560930.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601442560930.jpg",
+      "price_aud": "$52.91–107.11",
+      "price_note": "MOQ 1 pack",
+      "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+      "size": {
+        "variants": [
+          {
+            "label": "S 10 cm",
+            "diameter_mm": 100,
+            "height_mm": 100
+          },
+          {
+            "label": "M 12 cm",
+            "diameter_mm": 120,
+            "height_mm": 120
+          },
+          {
+            "label": "L 15 cm",
+            "diameter_mm": 150,
+            "height_mm": 150
+          }
+        ],
+        "cable_mm": 2000,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": "SKU names and size diagrams",
+        "confidence": "high",
+        "note": "Cable 200 cm adjustable."
+      },
+      "specs": {
+        "shade": "Natural alabaster, sphere",
+        "sizes": "10, 12, 15 cm",
+        "body": "Black iron, adjustable drop",
+        "bulb": "E27 LED, 20 W, 2700K",
+        "warranty": "2 years",
+        "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+        "shipping": "Quote from supplier"
+      },
+      "warning": null,
+      "shape": "sphere",
+      "finish": "natural alabaster, black canopy and cord"
+    },
+    {
+      "id": "1601717350584",
+      "kind": "pendant",
+      "name": "Clear and cream jelly glass pendant",
+      "url": "https://www.alibaba.com/product-detail/Nordic-Modern-Clear-Cream-Jelly-Glass_1601717350584.html",
+      "image": "lighting/1601717350584.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601717350584.jpg",
+      "price_aud": "$29.59",
+      "price_note": "Was $32.87; $26.00 at 100+; plus $42.52 shipping",
+      "supplier": "Zhongshan Ambi Technology, 1 yr, 4.9 ★ (79)",
+      "size": {
+        "variants": [
+          {
+            "label": "D250",
+            "diameter_mm": 250,
+            "height_mm": 140
+          }
+        ],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": "listing attributes (D250*H140mm)",
+        "confidence": "high",
+        "note": "Cable length not stated."
+      },
+      "specs": {
+        "shade": "Clear glass over cream glass",
+        "size": "250 mm wide, 140 mm high",
+        "body": "Iron, black or gold",
+        "light": "Built-in LED, 15 W, 3500K to 6000K",
+        "warranty": "3 years",
+        "supplier": "Zhongshan Ambi Technology, 1 yr, 4.9 ★ (79)",
+        "delivery": "30 Oct to 20 Nov"
+      },
+      "warning": null,
+      "shape": "clear glass dome over cream inner dome",
+      "finish": "clear glass outer, cream opal glass inner, brass or black cap and round canopy"
+    },
+    {
+      "id": "1601595127579",
+      "kind": "pendant",
+      "name": "Minimalist glossy white glass pendant",
+      "url": "https://www.alibaba.com/product-detail/Hot-Sell-Discounted-Minimalist-Pendant-Lamp_1601595127579.html",
+      "image": "lighting/1601595127579.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601595127579.jpg",
+      "price_aud": "$67.62",
+      "price_note": "MOQ 1 piece; plus $21.60 shipping",
+      "supplier": "Garsh Lamp Co., 13 yrs, 4.6 ★ (41)",
+      "size": {
+        "variants": [
+          {
+            "label": "D250",
+            "diameter_mm": 250,
+            "height_mm": 130
+          }
+        ],
+        "cable_mm": 1000,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": "listing description and size diagram",
+        "confidence": "high",
+        "note": "Description: D250, cable 1 m. A buyer review mentions a D300 option."
+      },
+      "specs": {
+        "shade": "Glossy white glass",
+        "body": "White iron",
+        "bulb": "Max 10 W, 3000K",
+        "warranty": "1 year, CE certified",
+        "supplier": "Garsh Lamp Co., 13 yrs, 4.6 ★ (41)",
+        "delivery": "25 Nov to 22 Jan"
+      },
+      "warning": null,
+      "shape": "flattened oval (lens)",
+      "finish": "glossy white opal glass, white cord and iron canopy"
+    },
+    {
+      "id": "1601757052146",
+      "kind": "pendant",
+      "name": "Walnut hat and glass pendant",
+      "url": "https://www.alibaba.com/product-detail/Rustic-Style-Walnutcolor-Lron-Glass-Chandelier_1601757052146.html",
+      "image": "lighting/1601757052146.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601757052146.jpg",
+      "price_aud": "$63.31–66.19",
+      "price_note": "MOQ 2 pieces",
+      "supplier": "Zhongshan Classical Photoelectric, 5 yrs, 4.5 ★ (54)",
+      "size": {
+        "variants": [
+          {
+            "label": "D200",
+            "diameter_mm": 200,
+            "height_mm": 100
+          }
+        ],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": "listing attributes (D200*H100MM) and size diagram",
+        "confidence": "high",
+        "note": "Cable adjustable, length not stated."
+      },
+      "specs": {
+        "shade": "Oval glass under walnut-colour iron hat",
+        "light": "Built-in LED, 12 W, 3000K or tricolour, dimmable",
+        "weight": "3 kg",
+        "warranty": "2 years",
+        "supplier": "Zhongshan Classical Photoelectric, 5 yrs, 4.5 ★ (54)",
+        "shipping": "Quote from supplier"
+      },
+      "warning": null,
+      "shape": "oval glass under a flat hat",
+      "finish": "walnut-colour iron hat, white opal glass, dark cord and canopy"
+    },
+    {
+      "id": "1601625675795",
+      "kind": "pendant",
+      "name": "Mustard glass pendant with globe",
+      "url": "https://www.alibaba.com/product-detail/Nordic-Minimalist-Oval-Glass-Pendant-Light_1601625675795.html",
+      "image": "lighting/1601625675795.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601625675795.jpg",
+      "price_aud": "$90.65",
+      "price_note": "$86.34 at 100+; plus $22.11 shipping",
+      "supplier": "Shenzhen Moonlight, 8 yrs, 4.1 ★ (408)",
+      "size": {
+        "variants": [
+          {
+            "label": "D270",
+            "diameter_mm": 270,
+            "height_mm": 210
+          }
+        ],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": "listing attributes (D27*H21cm)",
+        "confidence": "high",
+        "note": "Height includes the globe. Cable length not stated."
+      },
+      "specs": {
+        "shade": "Glass, mustard with cream globe",
+        "body": "Chrome",
+        "bulb": "E27, 12 W, 2700K to 6000K",
+        "voltage": "220 V ±10%",
+        "warranty": "3 years, CE certified",
+        "supplier": "Shenzhen Moonlight, 8 yrs, 4.1 ★ (408)",
+        "delivery": "25 Nov to 24 Jan"
+      },
+      "warning": null,
+      "shape": "glossy donut shade over a globe bulb (mushroom)",
+      "finish": "mustard/amber glass, cream opal globe, chrome canopy and cap"
+    },
+    {
+      "id": "1601362640370",
+      "kind": "pendant",
+      "name": "YH ribbed glass globe pendant, brass",
+      "url": "https://www.alibaba.com/product-detail/YH-Nordic-Traditional-Classic-Home-Indoor_1601362640370.html",
+      "image": "lighting/1601362640370.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601362640370.jpg",
+      "price_aud": "$286.34",
+      "price_note": "1–99 pcs; $142.45 at 100+",
+      "supplier": "Dongguan Yihao Lighting, 5 yrs, 4.2 ★ (54)",
+      "size": {
+        "variants": [
+          {
+            "label": "globe",
+            "diameter_mm": 250,
+            "height_mm": 280
+          }
+        ],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": "estimated from photo and 60 x 30 x 30 cm carton",
+        "confidence": "low",
+        "note": "Listing gives no fixture size. Globe estimated about 250 wide from the carton; rod length not stated."
+      },
+      "specs": {
+        "shade": "Ribbed glass globe",
+        "body": "Gold brass, 3 kg",
+        "bulb": "E12 LED, 40 W, 2700K",
+        "warranty": "2 years",
+        "supplier": "Dongguan Yihao Lighting, 5 yrs, 4.2 ★ (54)"
+      },
+      "warning": "E12 is a small US base, so you need an adaptor or US-style bulbs",
+      "shape": "ribbed glass globe on a rod",
+      "finish": "smoked ribbed glass (also pink diamond or opal), brass rod and canopy"
+    },
+    {
+      "id": "1601717267855",
+      "kind": "pendant",
+      "name": "Minimalist white LED pendant",
+      "url": "https://www.alibaba.com/product-detail/Modern-Minimalist-White-LED-Pendant-Light_1601717267855.html",
+      "image": "lighting/1601717267855.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601717267855.jpg",
+      "price_aud": "$44.41",
+      "price_note": "Was $49.34; $32.64 at 100+; plus $5.50 shipping",
+      "supplier": "Zhongshan Ambi Technology, 1 yr, 4.9 ★ (79)",
+      "size": {
+        "variants": [
+          {
+            "label": "D350 (listing)",
+            "diameter_mm": 350,
+            "height_mm": 160
+          },
+          {
+            "label": "D200 (diagram)",
+            "diameter_mm": 200,
+            "height_mm": 120
+          }
+        ],
+        "cable_mm": 1500,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": "listing attribute D350; size diagram 20 x 12 cm, cable 150 cm",
+        "confidence": "low",
+        "note": "The attribute says D350 but the diagram shows 200 x 120. D350 height estimated at the photo proportions. Confirm with the supplier."
+      },
+      "specs": {
+        "shade": "White PP, iron frame",
+        "light": "Built-in LED, 25 W, 3000K/4000K/6000K, dimmable",
+        "voltage": "110–220 V",
+        "warranty": "3 years, CE RoHS",
+        "supplier": "Zhongshan Ambi Technology, 1 yr, 4.9 ★ (79)",
+        "delivery": "23 Nov to 28 Jan"
+      },
+      "warning": null,
+      "shape": "flattened pebble",
+      "finish": "matte white PP shade, white cord and canopy"
+    },
+    {
+      "id": "1601523251213",
+      "kind": "pendant",
+      "name": "ZeroUNO alabaster pendant, brass or timber cap",
+      "url": "https://www.alibaba.com/product-detail/ZeroUNO-Alabaster-strong-Pendant-strong-strong_1601523251213.html",
+      "image": "lighting/1601523251213.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601523251213.jpg",
+      "price_aud": "$27.14–59.20",
+      "price_note": "MOQ 1 pack; styles A to H",
+      "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+      "size": {
+        "variants": [
+          {
+            "label": "A capsule",
+            "diameter_mm": 100,
+            "height_mm": 200
+          },
+          {
+            "label": "B globe 150",
+            "diameter_mm": 150,
+            "height_mm": 140
+          },
+          {
+            "label": "C brass cap drum",
+            "diameter_mm": 120,
+            "height_mm": 170
+          },
+          {
+            "label": "D brass cap square",
+            "diameter_mm": 120,
+            "height_mm": 140
+          },
+          {
+            "label": "E timber cap drum",
+            "diameter_mm": 120,
+            "height_mm": 170
+          },
+          {
+            "label": "F timber cap square",
+            "diameter_mm": 120,
+            "height_mm": 140
+          },
+          {
+            "label": "G globe 120",
+            "diameter_mm": 120,
+            "height_mm": 140
+          },
+          {
+            "label": "H globe 100",
+            "diameter_mm": 100,
+            "height_mm": 140
+          }
+        ],
+        "cable_mm": 2000,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": "style swatch images",
+        "confidence": "high",
+        "note": "Heights include the cap. Square styles are 120 x 120 in plan. Wire 200 cm, can be cut short."
+      },
+      "specs": {
+        "shade": "Spanish alabaster, drum, globe or cylinder",
+        "body": "Black iron, adjustable drop",
+        "bulb": "E27, 10 W, 2700K",
+        "weight": "1.2 kg",
+        "warranty": "2 years",
+        "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+        "shipping": "Quote from supplier"
+      },
+      "warning": null,
+      "shape": "styles A to H: capsule, globe, drum or square with brass or timber cap",
+      "finish": "Spanish alabaster, antique brass or deep wood-grain cap, black cord"
+    },
+    {
+      "id": "1601724305629",
+      "kind": "ceiling",
+      "name": "ZeroUNO alabaster ceiling light, brass",
+      "url": "https://www.alibaba.com/product-detail/ZEROUNO-Lighting-Alabaster-Ceiling-strong-Light_1601724305629.html",
+      "image": "lighting/1601724305629.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601724305629.jpg",
+      "price_aud": "$100.72–187.05",
+      "price_note": "MOQ 1 pack; range covers sizes",
+      "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "shade": "Natural alabaster, flush round",
+        "sizes": "40, 50, 60 cm",
+        "body": "Brass-gold metal",
+        "light": "Built-in LED, 2700K to 6000K options",
+        "weight": "5.4 kg",
+        "warranty": "2 years",
+        "supplier": "Zhongshan Baojiang Lighting, 6 yrs, 4.8 ★ (46)",
+        "shipping": "Quote from supplier"
+      },
+      "warning": null
+    },
+    {
+      "id": "1601648742412",
+      "kind": "chandelier",
+      "name": "Japandi 8-light chandelier, teak acrylic blades",
+      "url": "https://www.alibaba.com/product-detail/Japandi-Crystal-Chandelier-8-Light-Teak_1601648742412.html",
+      "image": "lighting/1601648742412.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601648742412.jpg",
+      "price_aud": "$184.18",
+      "price_note": "1–99 pcs; $172.67 at 100+",
+      "supplier": "Shenzhen Moonlight, 8 yrs, 4.1 ★ (408)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "size": "82 cm wide, 40 cm high; 100 cm cable + 30 cm rod",
+        "body": "Metal, amber acrylic, white glass",
+        "bulb": "8 × E27 LED, 48 W total, neutral white",
+        "voltage": "220 V",
+        "weight": "5 kg",
+        "warranty": "3 years, CE certified",
+        "supplier": "Shenzhen Moonlight, 8 yrs, 4.1 ★ (408)"
+      },
+      "warning": null
+    },
+    {
+      "id": "1600915780066",
+      "kind": "wall",
+      "name": "Nordic round glass wall lamp",
+      "url": "https://www.alibaba.com/product-detail/Nordic-Simple-Round-Wall-Lamp-Bedroom_1600915780066.html",
+      "image": "lighting/1600915780066.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1600915780066.jpg",
+      "price_aud": "$33.10–41.73",
+      "price_note": "MOQ 2 pieces",
+      "supplier": "Zhongshan Classical Photoelectric, 5 yrs, 4.5 ★ (54)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "shade": "Round glass disc, smoky grey or cognac",
+        "sizes": "23 × 11 cm, 30 × 13 cm",
+        "light": "Built-in LED, 5 W, 3000K, touch dimmable",
+        "warranty": "3 years",
+        "supplier": "Zhongshan Classical Photoelectric, 5 yrs, 4.5 ★ (54)"
+      },
+      "warning": null
+    },
+    {
+      "id": "1601469559653",
+      "kind": "wall",
+      "name": "Water-ripple acrylic wall sconce",
+      "url": "https://www.alibaba.com/product-detail/Modern-9W-LED-Wall-Sconce-Smoky_1601469559653.html",
+      "image": "lighting/1601469559653.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601469559653.jpg",
+      "price_aud": "$22.31",
+      "price_note": "MOQ 5; $17.70 at 20+; $15.37 at 200+",
+      "supplier": "Shenzhen Oriental Green Source, 17 yrs, 4.7 ★ (1046)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "shade": "Ripple acrylic: clear, amber, smoke grey",
+        "body": "Aluminium",
+        "light": "Built-in LED, 9 W, 3500K",
+        "warranty": "1 year, CE certified",
+        "supplier": "Shenzhen Oriental Green Source, 17 yrs, 4.7 ★ (1046)"
+      },
+      "warning": null
+    },
+    {
+      "id": "1601666996099",
+      "kind": "wall",
+      "name": "Glass globe wall lamp",
+      "url": "https://www.alibaba.com/product-detail/Hotel-Minimalist-Designer-Spherical-Glass-LED_1601666996099.html",
+      "image": "lighting/1601666996099.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601666996099.jpg",
+      "price_aud": "$12.24–16.84",
+      "price_note": "MOQ 10 pieces; range covers sizes",
+      "supplier": "Fuzhou Reacheight Imp & Exp, 12 yrs, 4.8 ★ (292)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "shade": "Glass globe, matte or glossy",
+        "sizes": "12, 15, 18, 20 cm",
+        "body": "Aluminium",
+        "light": "Built-in LED, 13 W, 3000K or 6000K",
+        "voltage": "220 V",
+        "warranty": "1 year, CE certified",
+        "supplier": "Fuzhou Reacheight Imp & Exp, 12 yrs, 4.8 ★ (292)"
+      },
+      "warning": null
+    },
+    {
+      "id": "1601550891680",
+      "kind": "switch",
+      "name": "NIVA toggle switch plate, 2 gang",
+      "url": "https://www.alibaba.com/product-detail/NIVA-Toggle-Light-Wall-Switch-Rocker_1601550891680.html",
+      "image": "lighting/1601550891680.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601550891680.jpg",
+      "price_aud": "$9.36",
+      "price_note": "MOQ 10; $8.78 at 100+",
+      "supplier": "Wenzhou Wendo Electric, 9 yrs, 4.8 ★ (312)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "plate": "Stainless steel, 86 × 86 mm",
+        "finish": "Gold, white, black, silver",
+        "switch": "2 gang, 2 way toggle, 13 A, 220–250 V",
+        "standard": "UK",
+        "supplier": "Wenzhou Wendo Electric, 9 yrs, 4.8 ★ (312)"
+      },
+      "warning": "Built to UK standard on an 86 mm square plate, not the Australian standard. Check with your electrician before buying: in Australia switches need AS/NZS approval to be installed."
+    },
+    {
+      "id": "1601086428514",
+      "kind": "switch",
+      "name": "Vintage white toggle switch, 1 to 4 gang",
+      "url": "https://www.alibaba.com/product-detail/Vintage-Wall-Toggle-Light-Switch-1_1601086428514.html",
+      "image": "lighting/1601086428514.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601086428514.jpg",
+      "price_aud": "$6.57–27.14",
+      "price_note": "MOQ 5; free shipping; range covers 1 to 4 gang and add-ons",
+      "supplier": "Wenzhou Jinhai Electrical, 5 yrs, 4.6 ★ (469)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "plate": "Stainless steel, 86 × 86 mm",
+        "finish": "White, white metal levers",
+        "switch": "1 to 4 gang, 2 way toggle, 13 A, 110–250 V",
+        "options": "Dimmer, fan speed, EU/FR sockets, USB",
+        "certified": "CE, UKCA, RoHS",
+        "supplier": "Wenzhou Jinhai Electrical, 5 yrs, 4.6 ★ (469)",
+        "delivery": "2 Nov to 29 Nov"
+      },
+      "warning": "Certified for the UK and EU, not Australia, and the 86 mm square plate isn't the Australian size. Check with your electrician before buying."
+    },
+    {
+      "id": "1601729629094",
+      "kind": "floor",
+      "name": "Mushroom floor lamp, Bauhaus style",
+      "url": "https://www.alibaba.com/product-detail/Mushroom-Floor-Lamp-LED-Luxury-Hotel_1601729629094.html",
+      "image": "lighting/1601729629094.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601729629094.jpg",
+      "price_aud": "$35.98",
+      "price_note": "MOQ 50; $28.78 at 100+; $21.59 at 500+",
+      "supplier": "Zhongshan Xindengge Lighting, 2 yrs, 4.7 ★ (67)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "shade": "Acrylic mushroom dome",
+        "body": "Iron, silver or black",
+        "bulb": "E27, up to 40 W, not included",
+        "voltage": "220 V, dimmable",
+        "warranty": "2 years",
+        "supplier": "Zhongshan Xindengge Lighting, 2 yrs, 4.7 ★ (67)"
+      },
+      "warning": "Minimum order is 50 lamps"
+    },
+    {
+      "id": "1601949685445",
+      "kind": "table",
+      "name": "Marble and glass table lamp",
+      "url": "https://www.alibaba.com/product-detail/Modern-Postmodern-Marble-Glass-LED-Table_1601949685445.html",
+      "image": "lighting/1601949685445.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1601949685445.jpg",
+      "price_aud": "$83.46",
+      "price_note": "MOQ 10; $80.58 at 100+; $253.36 shipping for 10",
+      "supplier": "Shenzhen Moonlight, 8 yrs, 4.1 ★ (408)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "build": "Marble base, glass shade",
+        "bulb": "E27 LED, 6 W, 3000K/4000K/6000K",
+        "plug": "AU plug available",
+        "warranty": "2 years, CE certified",
+        "supplier": "Shenzhen Moonlight, 8 yrs, 4.1 ★ (408)"
+      },
+      "warning": "Minimum order is 10 lamps"
+    },
+    {
+      "id": "1600952104838",
+      "kind": "table",
+      "name": "Hotel bedside lamp, ribbed glass and gold",
+      "url": "https://www.alibaba.com/product-detail/Modern-Hotel-Bedside-Lamp-Home-Decor_1600952104838.html",
+      "image": "lighting/1600952104838.jpg",
+      "image_url": "https://reecen9696.github.io/house-moodboard/lighting/1600952104838.jpg",
+      "price_aud": "$79.13",
+      "price_note": "MOQ 10; $71.93 at 50+; $395.39 shipping for 10",
+      "supplier": "Garsh Lamp Co., 13 yrs, 4.6 ★ (41)",
+      "size": {
+        "variants": [],
+        "cable_mm": null,
+        "canopy_mm": null,
+        "wall_projection_mm": null,
+        "source": null,
+        "confidence": "unknown",
+        "note": null
+      },
+      "specs": {
+        "size": "300 mm wide, 390 mm high",
+        "build": "Iron, clear and gold; ribbed glass shade",
+        "bulb": "G9, not included",
+        "voltage": "220 V ±10%",
+        "warranty": "1 year, CE certified",
+        "supplier": "Garsh Lamp Co., 13 yrs, 4.6 ★ (41)"
+      },
+      "warning": "Minimum order is 10 lamps"
+    }
+  ]
+}

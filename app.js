@@ -32,6 +32,9 @@ const ICON = {
   go: svg("M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"),
   chat: svg("M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"),
   send: svg("M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"),
+  lamp: svg("M11 2h2v5h1.6l5.4 8H4l5.4-8H11zm-1 15h4a2 2 0 0 1-4 0z"),
+  toggle: svg("M17 7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h10c2.76 0 5-2.24 5-5s-2.24-5-5-5zm0 8c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"),
+  tag: svg("M21.41 11.41l-8.83-8.83c-.37-.37-.88-.58-1.41-.58H4c-1.1 0-2 .9-2 2v7.17c0 .53.21 1.04.59 1.41l8.83 8.83c.78.78 2.05.78 2.83 0l7.17-7.17c.78-.78.78-2.04-.01-2.83zM6.5 8C5.67 8 5 7.33 5 6.5S5.67 5 6.5 5 8 5.67 8 6.5 7.33 8 6.5 8z"),
   art: svg("M12 2C6.49 2 2 6.49 2 12s4.49 10 10 10c1.38 0 2.5-1.12 2.5-2.5 0-.61-.23-1.2-.64-1.67-.08-.1-.13-.21-.13-.33 0-.28.22-.5.5-.5H16c3.31 0 6-2.69 6-6 0-4.96-4.49-9-10-9zm5.5 11c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm-3-4c-.83 0-1.5-.67-1.5-1.5S13.67 6 14.5 6s1.5.67 1.5 1.5S15.33 9 14.5 9zM5 11.5c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5S7.33 13 6.5 13 5 12.33 5 11.5zm6-4c0 .83-.67 1.5-1.5 1.5S8 8.33 8 7.5 8.67 6 9.5 6s1.5.67 1.5 1.5z"),
 };
 // Artwork is its own board (the Art tab): its photos have room "art", which keeps them off Home and Rooms
@@ -76,7 +79,7 @@ const state = {
   items: [],
   sources: [], // pasted links: listings, articles, products
   comments: [], // notes on photos, oldest first
-  view: ["home", "rooms", "links", "art"].includes(ls.get("view")) ? ls.get("view") : "home",
+  view: ["home", "rooms", "links", "art", "lighting", "switches", "sourcing"].includes(ls.get("view")) ? ls.get("view") : "home",
   zoom: clamp(ls.get("zoom", 1), 0, ROW_HEIGHT.length - 1),
   selected: null, // Set of item ids while selecting
   armed: false, // bulk delete waiting for its confirming tap
@@ -190,6 +193,74 @@ function linksHtml() {
   return `<h1 class="title">Links</h1>${group("Houses", sources.filter(isHouse))}${group("Other", sources.filter((s) => !isHouse(s)))}`;
 }
 
+// Lighting and Switches tabs: fixtures shortlisted from suppliers, read from lighting.json (static, deployed with the site).
+// The same file carries every size in mm, so the 3D house model can place them.
+const LIGHT_KINDS = { pendant: "Pendants", ceiling: "Ceiling", chandelier: "Chandeliers", wall: "Wall", table: "Table", floor: "Floor", switch: "Switches" };
+let lighting = null; // null until lighting.json loads
+async function loadLighting() {
+  try { lighting = await (await fetch("lighting.json", { cache: "no-cache" })).json(); } catch { lighting = { items: [] }; }
+  if (state.view === "lighting" || state.view === "switches") render();
+}
+const mm = (n) => (n >= 1000 ? `${+(n / 1000).toFixed(2)} m` : `${n} mm`);
+function sizeLine(v) {
+  const parts = [v.diameter_mm && `Ø${mm(v.diameter_mm)}`, v.width_mm && `W ${mm(v.width_mm)}`, v.depth_mm && `D ${mm(v.depth_mm)}`, v.height_mm && `H ${mm(v.height_mm)}`].filter(Boolean);
+  return parts.join("  ");
+}
+function lightingHtml(switches) {
+  const title = switches ? "Switches" : "Lighting";
+  if (!lighting) { loadLighting(); return `<h1 class="title">${title}</h1>`; }
+  const items = (lighting.items || []).filter((l) => (l.kind === "switch") === switches);
+  if (!items.length) return `<div class="empty"><b>No ${title.toLowerCase()} yet</b>Items added to lighting.json show up here.</div>`;
+  const card = (l) => {
+    const sizes = (l.size?.variants || []).map((v) => `<span>${esc(v.label ? `${v.label}: ` : "")}${esc(sizeLine(v) || "size not listed")}</span>`).join("");
+    return `<a class="light" href="${esc(l.url)}" target="_blank" rel="noopener">
+      <img src="${esc(l.image)}" alt="${esc(l.name)}" loading="lazy">
+      <b>${esc(l.name)}</b>
+      <span class="price">${esc(l.price_aud)}</span>
+      <span class="sizes">${sizes || "<span>Size not listed</span>"}</span>
+      ${l.warning ? `<span class="warn">${esc(l.warning.split(/(?<=\.) /)[0])}</span>` : ""}
+    </a>`;
+  };
+  const groups = Object.entries(LIGHT_KINDS).map(([k, name]) => [name, items.filter((l) => l.kind === k)]).filter(([, g]) => g.length);
+  return `<h1 class="title">${title}</h1><p class="lights-sub">${items.length} ${switches ? "switches" : "fixtures"}, sizes in mm. Data for the 3D model: <a href="lighting.json" target="_blank">lighting.json</a></p>`
+    + (switches ? `<div class="lights">${items.map(card).join("")}</div>`
+      : groups.map(([name, g]) => `<h2 class="links-head">${name}</h2><div class="lights">${g.map(card).join("")}</div>`).join(""));
+}
+
+// Sourcing tab: the light fittings shortlist (Beacon originals and the factory alternatives), read from sourcing.json.
+// Photo first with the price on it; tap for the details sheet.
+let sourcing = null; // null until sourcing.json loads
+async function loadSourcing() {
+  try { sourcing = await (await fetch("sourcing.json", { cache: "no-cache" })).json(); } catch { sourcing = { items: [] }; }
+  if (state.view === "sourcing") render();
+}
+function sourcingHtml() {
+  if (!sourcing) { loadSourcing(); return `<h1 class="title">Sourcing</h1>`; }
+  const items = sourcing.items || [];
+  if (!items.length) return `<div class="empty"><b>No fittings yet</b>Items added to sourcing.json show up here.</div>`;
+  const card = (l) => `<button class="src" data-act="sourcing" data-id="${esc(l.id)}" aria-label="${esc(l.name)}">
+    ${l.image ? `<img src="${esc(l.image)}" alt="" loading="lazy">` : `<span class="noimg">${esc(l.name)}</span>`}
+    ${l.price ? `<span class="pill">${esc(l.price)}</span>` : ""}</button>`;
+  const groups = Object.entries(sourcing.groups || {}).map(([k, name]) => [name, items.filter((l) => l.group === k)]).filter(([, g]) => g.length);
+  return `<h1 class="title">Sourcing</h1><p class="lights-sub">${esc(sourcing.note || "")}</p>`
+    + groups.map(([name, g]) => `<h2 class="links-head">${esc(name)}</h2><div class="srcs">${g.map(card).join("")}</div>`).join("");
+}
+function openSourcing(id) {
+  const l = sourcing?.items.find((x) => x.id === id);
+  if (!l) return;
+  const para = (label, text, cls = "") => (text ? `<p class="${cls}"><b>${label}</b>${esc(text)}</p>` : "");
+  openSheet(`<div class="srcinfo">
+    ${l.image ? `<img src="${esc(l.image)}" alt="">` : ""}
+    <h3>${esc(l.name)}</h3>
+    <div class="price">${esc(l.price || "Price pending")}</div>
+    ${l.price_note ? `<small>${esc(l.price_note)}</small>` : ""}
+    ${l.description ? `<p>${esc(l.description)}</p>` : ""}
+    ${l.specs?.length ? `<ul>${l.specs.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+    ${para("Supplier", l.supplier)}${para("Status", l.status)}${para("Catch", l.catch, "warn")}
+    ${l.url ? `<a class="primary" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.link || "View listing")}</a>` : ""}
+  </div>`);
+}
+
 function tileHtml(item, ratio, row) {
   const w = ratio * row.h;
   const src = store.src(item, w > 300 ? "full" : "thumb");
@@ -210,6 +281,8 @@ function renderNow() {
   GAP = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--gap")) || 2;
   view.classList.toggle("selecting", !!state.selected);
   if (state.view === "links") view.innerHTML = linksHtml();
+  else if (state.view === "lighting" || state.view === "switches") view.innerHTML = lightingHtml(state.view === "switches");
+  else if (state.view === "sourcing") view.innerHTML = sourcingHtml();
   else {
     const secs = sections(), art = state.view === "art";
     const count = secs.reduce((n, s) => n + s.items.length, 0);
@@ -229,9 +302,9 @@ function renderNav() {
   const sel = state.selected;
   if (!sel) {
     const tab = (val, icon, name) => `<button data-act="view" data-val="${val}" class="${state.view === val ? "on" : ""}" aria-label="${name}">${icon}</button>`;
-    $("#nav").innerHTML = `<div class="side"><button data-act="view" data-val="${state.view === "rooms" ? "rooms" : "home"}" class="${["home", "rooms"].includes(state.view) ? "on" : ""}" aria-label="Photos">${ICON.home}</button>${tab("art", ICON.art, "Artwork")}</div>
+    $("#nav").innerHTML = `<div class="side"><button data-act="view" data-val="${state.view === "rooms" ? "rooms" : "home"}" class="${["home", "rooms"].includes(state.view) ? "on" : ""}" aria-label="Photos">${ICON.home}</button>${tab("art", ICON.art, "Artwork")}${tab("sourcing", ICON.tag, "Sourcing")}</div>
       <button data-act="add" class="add" aria-label="Add">${ICON.add}</button>
-      <div class="side">${tab("links", ICON.link, "Links")}</div>`;
+      <div class="side">${tab("lighting", ICON.lamp, "Lighting")}${tab("switches", ICON.toggle, "Switches")}${tab("links", ICON.link, "Links")}</div>`;
     return;
   }
   const n = sel.size;
@@ -906,6 +979,7 @@ async function onAct(act, el) {
     $("#main").scrollTo(0, 0);
     renderNow();
   }
+  if (act === "sourcing") openSourcing(el.dataset.id);
   if (act === "cancel") setSelecting(false);
   if (act === "select-all") {
     const items = sections().find((s) => String(s.id) === el.dataset.id)?.items || [];
